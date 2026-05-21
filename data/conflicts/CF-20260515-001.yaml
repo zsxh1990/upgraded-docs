@@ -1,0 +1,18 @@
+title: "碰撞检测安全距离标准分歧"
+status: "待解决"
+proposer: "仿真组"
+proposed_at: "2026-05-15"
+related_docs:
+  - "机器人模拟仿真通用技术规范.md"
+  - "碰撞检测标准.md"
+description: >
+  规范中规定动态碰撞安全距离 ≥ 5mm，但项目 A 的客户
+  要求 ≥ 10mm。是否需要根据客户要求浮动，还是统一
+  收紧到 10mm？
+solutions:
+  - proposer: "技术负责人"
+    content: "建议维持 5mm 为最低标准，客户要求高于此标准时以客户为准。在项目规格书中注明差异。"
+    proposed_at: "2026-05-16"
+  - proposer: "质量组"
+    content: "同意。在通用规范中增加备注：客户项目规格书要求高于此标准时，以客户要求为准。"
+    proposed_at: "2026-05-17"

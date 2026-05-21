@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>冲突管理 - 机器人知识库</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f5f7; color: #172b4d; }
+.header { background: #0747A6; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 24px; }
+.header h1 { font-size: 20px; cursor: pointer; }
+.header nav { display: flex; gap: 16px; }
+.header nav a { color: #b3d4ff; text-decoration: none; font-size: 14px; }
+.header nav a:hover { color: #fff; }
+.container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.toolbar h2 { font-size: 18px; }
+.btn { padding: 8px 16px; background: #0747A6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.btn:hover { background: #0052cc; }
+.btn-sm { padding: 4px 12px; font-size: 12px; }
+.btn-green { background: #36b37e; }
+.btn-green:hover { background: #2d9d6e; }
+.btn-red { background: #e34935; }
+.btn-red:hover { background: #cf392a; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.filter-bar select { padding: 6px 12px; border: 1px solid #dfe1e6; border-radius: 4px; font-size: 13px; }
+.card { background: #fff; border-radius: 6px; padding: 16px 20px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+.card-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.card-meta { display: flex; gap: 12px; font-size: 12px; color: #7a869a; margin-bottom: 8px; }
+.card-body { font-size: 14px; color: #42526e; line-height: 1.5; margin-bottom: 8px; }
+.card-actions { display: flex; gap: 8px; }
+.status { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; }
+.status-pending { background: #fff0e0; color: #d97008; }
+.status-resolved { background: #e3fcef; color: #0a7e3d; }
+.solution-item { background: #f8f9fa; border-radius: 4px; padding: 8px 12px; margin: 4px 0; font-size: 13px; }
+.empty { text-align: center; padding: 48px; color: #7a869a; }
+.modal-overlay { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); z-index: 999; }
+.modal { background: #fff; border-radius: 8px; max-width: 560px; margin: 80px auto; padding: 24px; }
+.modal h3 { margin-bottom: 16px; }
+.modal input, .modal textarea, .modal select { width: 100%; padding: 8px 12px; border: 1px solid #dfe1e6; border-radius: 4px; margin-bottom: 12px; font-size: 14px; }
+.modal textarea { min-height: 80px; resize: vertical; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 onclick="location.href='/'">📚 机器人知识库</h1>
+  <nav><a href="/">搜索</a><a href="/conflicts.html">冲突管理</a></nav>
+</div>
+<div class="container">
+  <div class="toolbar">
+    <h2>⚠️ 冲突管理</h2>
+    <button class="btn" onclick="showNewModal()">+ 新建冲突</button>
+  </div>
+  <div class="filter-bar">
+    <select id="statusFilter" onchange="load()">
+      <option value="">全部状态</option>
+      <option value="待解决">待解决</option>
+      <option value="已解决">已解决</option>
+    </select>
+  </div>
+  <div id="list"></div>
+</div>
+
+<!-- 新建/详情 Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+async function load() {
+  const status = document.getElementById('statusFilter').value;
+  const r = await fetch('/api/conflicts?status=' + encodeURIComponent(status));
+  const conflicts = await r.json();
+  const el = document.getElementById('list');
+  if (conflicts.length === 0) {
+    el.innerHTML = '<div class="empty">暂无冲突记录</div>';
+    return;
+  }
+  el.innerHTML = conflicts.map(c => renderCard(c)).join('');
+}
+
+function renderCard(c) {
+  const st = c.status === '已解决' ? 'status-resolved' : 'status-pending';
+  const solutions = (c.solutions || []).map(s =>
+    '<div class="solution-item">🧑 ' + esc(s.proposer || '?') + ': ' + esc(s.content || '') + '</div>'
+  ).join('');
+  return '<div class="card">' +
+    '<div class="card-title">' + esc(c.title) +
+    ' <span class="status ' + st + '">' + esc(c.status) + '</span></div>' +
+    '<div class="card-meta">' +
+    '<span>#' + esc(c.id || '') + '</span>' +
+    '<span>' + esc(c.proposed_at || '').slice(0,16) + '</span>' +
+    '<span>' + esc(c.proposer || '') + '</span>' +
+    '</div>' +
+    '<div class="card-body">' + esc(c.description || '').slice(0,200) + '</div>' +
+    (solutions ? solutions : '') +
+    (c.final_spec ? '<div class="solution-item" style="background:#e3fcef;">✅ 最终规范: ' + esc(c.final_spec) + '</div>' : '') +
+    '<div class="card-actions">' +
+    (c.status !== '已解决' ? '<button class="btn btn-green btn-sm" onclick="showResolveModal(\'' + c.id + '\')">解决</button>' : '') +
+    '<button class="btn btn-sm" onclick="showDetailModal(\'' + c.id + '\')">详情</button>' +
+    '</div></div>';
+}
+
+async function showDetailModal(cid) {
+  const r = await fetch('/api/conflicts/' + cid);
+  const c = await r.json();
+  const modal = document.getElementById('modalContent');
+  modal.innerHTML = '<h3>⚠️ ' + esc(c.title) + '</h3>' +
+    '<div style="font-size:13px;color:#7a869a;margin-bottom:12px;">#' + esc(c.id) + ' | ' + esc(c.proposer || '') + ' | ' + esc(c.proposed_at || '') + '</div>' +
+    '<div style="font-size:14px;line-height:1.6;margin-bottom:16px;">' + esc(c.description || '') + '</div>' +
+    (c.related_docs && c.related_docs.length ? '<div style="font-size:13px;color:#42526e;">关联文档: ' + c.related_docs.join(', ') + '</div>' : '') +
+    (c.final_spec ? '<div style="background:#e3fcef;padding:8px 12px;border-radius:4px;margin-top:8px;">✅ 最终规范: ' + esc(c.final_spec) + '</div>' : '') +
+    '<div class="modal-actions" style="margin-top:16px;"><button class="btn" onclick="closeModal()">关闭</button></div>';
+  document.getElementById('modal').style.display = 'block';
+}
+
+function showNewModal() {
+  document.getElementById('modalContent').innerHTML =
+    '<h3>新建冲突</h3>' +
+    '<input id="cfTitle" placeholder="标题"><textarea id="cfDesc" placeholder="描述"></textarea>' +
+    '<input id="cfProposer" placeholder="提出人"><input id="cfRelated" placeholder="关联文档(逗号分隔)">' +
+    '<div class="modal-actions">' +
+    '<button class="btn" onclick="createConflict()">提交</button>' +
+    '<button class="btn btn-red" onclick="closeModal()">取消</button></div>';
+  document.getElementById('modal').style.display = 'block';
+}
+
+async function createConflict() {
+  const data = {
+    title: document.getElementById('cfTitle').value.trim(),
+    description: document.getElementById('cfDesc').value.trim(),
+    proposer: document.getElementById('cfProposer').value.trim(),
+    related_docs: document.getElementById('cfRelated').value.split(/[,，]/).map(s => s.trim()).filter(Boolean),
+  };
+  if (!data.title) return alert('标题不能为空');
+  await fetch('/api/conflicts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  closeModal();
+  load();
+}
+
+function showResolveModal(cid) {
+  document.getElementById('modalContent').innerHTML =
+    '<h3>解决冲突</h3>' +
+    '<textarea id="finalSpec" placeholder="最终规范（定版内容）" style="min-height:120px;"></textarea>' +
+    '<div class="modal-actions">' +
+    '<button class="btn btn-green" onclick="resolveConflict(\'' + cid + '\')">确认解决</button>' +
+    '<button class="btn btn-red" onclick="closeModal()">取消</button></div>';
+  document.getElementById('modal').style.display = 'block';
+}
+
+async function resolveConflict(cid) {
+  const fs = document.getElementById('finalSpec').value.trim();
+  await fetch('/api/conflicts/' + cid + '/resolve', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({final_spec: fs})});
+  closeModal();
+  load();
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+load();
+</script>
+</body>
+</html>

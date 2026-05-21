@@ -1,0 +1,11 @@
+# 机器人知识库 — 轻量本地知识库系统
+# 零 Docker，纯内网，语义搜索
+
+flask>=3.0
+numpy>=1.24
+fastembed>=0.3
+PyYAML>=6.0
+markdown>=3.4
+python-docx>=1.0
+openpyxl>=3.1
+pymupdf4llm>=0.1
