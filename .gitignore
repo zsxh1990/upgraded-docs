@@ -2,3 +2,7 @@
 __pycache__/
 .DS_Store
 venv/
+
+# 入库文档留在本地，不上 GitHub
+data/documents/
+data/robot_knowledge.db
