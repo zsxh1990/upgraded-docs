@@ -1,29 +1,79 @@
 """语义搜索引擎 — 轻量级向量检索替代 LIKE
 
-使用 fastembed（ONNX 运行时，零 torch 依赖），
-首次运行自动下载模型（~30MB），之后缓存本地。
+支持两种模式：
+1. fastembed（ONNX 运行时，零 torch 依赖）
+2. 本地 LM Studio（OpenAI 兼容 API）
 """
 
 import numpy as np
 from pathlib import Path
+import os
 
 # 延迟导入，让用户看到清晰的错误提示
 _MODEL = None
 _DOCS = []
 _EMBEDDINGS = None
+_USE_LM_STUDIO = False
+_LM_STUDIO_URL = None
 
 
 def _get_model():
-    global _MODEL
-    if _MODEL is None:
-        try:
-            from fastembed import TextEmbedding
-            _MODEL = TextEmbedding("BAAI/bge-small-zh-v1.5")
-        except ImportError:
-            print("⚠️  fastembed 未安装，降级为关键词搜索")
-            print("   安装: pip install fastembed")
-            _MODEL = False
+    global _MODEL, _USE_LM_STUDIO, _LM_STUDIO_URL
+
+    if _MODEL is not None:
+        return _MODEL
+
+    # 优先尝试本地 LM Studio
+    lm_studio_url = os.environ.get("LM_STUDIO_URL", "http://localhost:1234/v1")
+    try:
+        import httpx
+        # 测试 LM Studio 是否可用
+        resp = httpx.get(f"{lm_studio_url}/models", timeout=2.0)
+        if resp.status_code == 200:
+            _USE_LM_STUDIO = True
+            _LM_STUDIO_URL = lm_studio_url
+            print(f"✅ 使用本地 LM Studio: {lm_studio_url}")
+            _MODEL = True  # 标记为已初始化
+            return _MODEL
+    except Exception:
+        pass
+
+    # 回退到 fastembed
+    try:
+        from fastembed import TextEmbedding
+        _MODEL = TextEmbedding("BAAI/bge-small-zh-v1.5")
+        print("✅ 使用 fastembed 本地模型")
+    except ImportError:
+        print("⚠️  fastembed 未安装，降级为关键词搜索")
+        print("   安装: pip install fastembed")
+        _MODEL = False
+    except Exception as e:
+        print(f"⚠️  fastembed 模型加载失败: {e}")
+        print("   降级为关键词搜索")
+        _MODEL = False
+
     return _MODEL
+
+
+def _embed_with_lm_studio(texts: list[str]) -> np.ndarray:
+    """使用 LM Studio API 生成 embeddings"""
+    import httpx
+
+    embeddings = []
+    for text in texts:
+        resp = httpx.post(
+            f"{_LM_STUDIO_URL}/embeddings",
+            json={"model": "text-embedding-bge-small-zh-v1.5", "input": text},
+            timeout=30.0
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            embeddings.append(data["data"][0]["embedding"])
+        else:
+            # 回退到零向量
+            embeddings.append([0.0] * 512)
+
+    return np.array(embeddings)
 
 
 def build_index(docs: list[dict]):
@@ -45,8 +95,13 @@ def build_index(docs: list[dict]):
         return
 
     texts = [f"{d['title']} {d['content'][:500]}" for d in docs]
-    embeddings = list(model.embed(texts))
-    _EMBEDDINGS = np.array(embeddings)
+
+    if _USE_LM_STUDIO:
+        _EMBEDDINGS = _embed_with_lm_studio(texts)
+    else:
+        embeddings = list(model.embed(texts))
+        _EMBEDDINGS = np.array(embeddings)
+
     print(f"  语义索引构建完成: {len(docs)} 篇, 维度 {_EMBEDDINGS.shape[1]}")
 
 
@@ -63,9 +118,10 @@ def search(query: str, top_k: int = 10, category: str = "") -> list[dict]:
         candidates = [d for d in candidates if d.get("category") == category]
 
     kw = query.lower()
+    # 简单关键词匹配：检查查询是否包含在标题或内容中
     kw_filtered = [
         d for d in candidates
-        if kw in d["title"].lower() or kw in d["content"][:300].lower()
+        if kw in d["title"].lower() or kw in d["content"][:1000].lower()
     ]
 
     # 如果关键词没有命中，放宽到全文
@@ -82,7 +138,10 @@ def search(query: str, top_k: int = 10, category: str = "") -> list[dict]:
         doc_map = {id(d): i for i, d in enumerate(_DOCS)}
         indices = [doc_map[id(d)] for d in kw_filtered if id(d) in doc_map]
         if indices:
-            query_vec = list(model.embed([query]))[0]
+            if _USE_LM_STUDIO:
+                query_vec = _embed_with_lm_studio([query])[0]
+            else:
+                query_vec = list(model.embed([query]))[0]
             scores = _EMBEDDINGS[indices] @ np.array(query_vec)
             ranked = sorted(
                 zip(kw_filtered, scores),
@@ -110,7 +169,11 @@ def detect_conflicts(title, content, threshold=0.82):
     if not model or _EMBEDDINGS.size == 0 or not _DOCS:
         return []
 
-    query_vec = list(model.embed([f"{title} {content[:300]}"]))[0]
+    if _USE_LM_STUDIO:
+        query_vec = _embed_with_lm_studio([f"{title} {content[:300]}"])[0]
+    else:
+        query_vec = list(model.embed([f"{title} {content[:300]}"]))[0]
+
     scores = _EMBEDDINGS @ np.array(query_vec)
     ranked = sorted(zip(_DOCS, scores), key=lambda x: x[1], reverse=True)
 

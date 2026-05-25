@@ -18,6 +18,7 @@ BASE = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE / "data"
 DB_PATH = DATA_DIR / "robot_knowledge.db"
 FRONTEND_DIR = BASE / "frontend"
+GRAPH_PATH = BASE / "wiki" / ".understand-anything" / "knowledge-graph.json"
 
 sys.path.insert(0, str(BASE / "backend"))
 from search_engine import build_index, search as _semantic_search
@@ -106,6 +107,15 @@ def api_search():
             "score": r["score"],
         })
     return jsonify({"results": out, "total": len(out)})
+
+
+@app.route("/api/documents")
+def api_documents():
+    """列出所有文档。"""
+    conn = get_db()
+    rows = conn.execute("SELECT id, title, category, filename, created_at FROM documents ORDER BY title").fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
 
 
 @app.route("/api/document/<doc_id>")
@@ -232,6 +242,20 @@ def conflicts_page():
     return send_from_directory(FRONTEND_DIR, "conflicts.html")
 
 
+@app.route("/graph.html")
+def graph_page():
+    return send_from_directory(FRONTEND_DIR, "graph.html")
+
+
+@app.route("/api/graph")
+def api_graph():
+    """返回知识图谱数据。"""
+    if not GRAPH_PATH.exists():
+        return jsonify({"error": "知识图谱未生成，请先运行分析脚本"}), 404
+    with open(GRAPH_PATH, "r", encoding="utf-8") as f:
+        return jsonify(json.load(f))
+
+
 @app.route("/api/detect-conflicts", methods=["POST"])
 def api_detect_conflicts():
     """对知识库全量文档执行冲突检测。"""
@@ -332,6 +356,19 @@ def api_obsidian_annotate():
     return jsonify({"success": ok})
 
 
+@app.route("/api/obsidian/sync-graph", methods=["POST"])
+def api_obsidian_sync_graph():
+    """将知识图谱数据同步回 Obsidian 笔记。"""
+    if not GRAPH_PATH.exists():
+        return jsonify({"error": "知识图谱未生成"}), 404
+
+    with open(GRAPH_PATH, "r", encoding="utf-8") as f:
+        graph_data = json.load(f)
+
+    stats = obsidian_bridge.sync_knowledge_graph_to_obsidian(graph_data)
+    return jsonify(stats)
+
+
 @app.route("/api/documents/<doc_id>/related")
 def api_document_related(doc_id):
     """获取文档的关联文件（基于 wikilink）。"""
@@ -374,4 +411,4 @@ if __name__ == "__main__":
     print(f"🌐 启动: http://localhost:5000")
     print(f"   搜索: http://localhost:5000/?q=零点标定")
     print(f"   冲突: http://localhost:5000/conflicts.html")
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=8080, debug=True)

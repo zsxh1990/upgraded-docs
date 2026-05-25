@@ -1,0 +1,484 @@
+{
+  "entities": [
+    {
+      "name": "Tecnomatix",
+      "type": "software",
+      "summary": "西门子工艺规划及仿真软件平台，用于车身线数字化仿真数据",
+      "source_doc": "仿真数据节点层级规范"
+    },
+    {
+      "name": "PDPS",
+      "type": "software",
+      "summary": "西门子软件平台，用于工艺规划及仿真数据节点层级管理",
+      "source_doc": "仿真数据节点层级规范"
+    },
+    {
+      "name": "RCS",
+      "type": "software",
+      "summary": "机器人控制系统，用于运行虚拟调试视频",
+      "source_doc": "仿真评审及交付物要求"
+    },
+    {
+      "name": "PLC",
+      "type": "device",
+      "summary": "可编程逻辑控制器，用于电气程序控制",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "name": "WDP/PDP/MCP/VDP/J-BOX/OP-BOX",
+      "type": "device",
+      "summary": "电器柜资源，命名中应包含品牌、型号信息",
+      "source_doc": "仿真数据终验收规范"
+    },
+    {
+      "name": "PD项目",
+      "type": "standard",
+      "summary": "数据整合格式，所有区域数据必须整合到一个PD项目中",
+      "source_doc": "仿真数据终验收规范"
+    },
+    {
+      "name": "PS",
+      "type": "software",
+      "summary": "仿真接口/项目，用于存放各区域仿真节点和工艺卡导出",
+      "source_doc": "仿真数据节点层级规范"
+    },
+    {
+      "name": "车间坐标系",
+      "type": "standard",
+      "summary": "车间区域内自定义坐标系，所有线体及设备安装的公用统一基准",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "name": "机器人",
+      "type": "device",
+      "summary": "工业机器人的统称，包括6轴、7轴等多种类型",
+      "source_doc": "仿真过程参数要求"
+    },
+    {
+      "name": "激光跟踪仪",
+      "type": "tool",
+      "summary": "用于机器人BASE测量的高精度设备，单站测量半径≥20m",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "name": "Plant Simulation",
+      "type": "software",
+      "summary": "用于工厂仿真计算的软件平台",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "name": "GSD文件",
+      "type": "standard",
+      "summary": "机器人设备配置文件，如GSDML-V2.42-BoschRexrothAG-PRC7000Interface",
+      "source_doc": "小米车身组态文件样例库"
+    },
+    {
+      "name": "换枪盘",
+      "type": "device",
+      "summary": "用于机器人工具切换的装置，分为机器人侧和工具端",
+      "source_doc": "仿真过程参数要求"
+    },
+    {
+      "name": "焊钳",
+      "type": "device",
+      "summary": "焊接工具，包括点焊枪、SPR枪、FDS枪等多种类型",
+      "source_doc": "小米PD客户化文件定制说明"
+    },
+    {
+      "name": "七轴机器人",
+      "type": "device",
+      "summary": "具有7个自由度的机器人系统，用于复杂工艺处理",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "name": "夹具",
+      "type": "device",
+      "summary": "用于固定工件的装置，包括补焊夹具、定位焊夹具等",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "name": "抓手",
+      "type": "device",
+      "summary": "用于搬运工件的装置，包括自动装配抓手、简单/中等/复杂抓手等",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "name": "激光头",
+      "type": "device",
+      "summary": "激光焊接设备，用于激光钎焊、飞行焊等工艺",
+      "source_doc": "小米PD客户化文件定制说明"
+    },
+    {
+      "name": "Tecnomatix",
+      "type": "software",
+      "summary": "西门子工艺仿真软件平台，包含PD/PS模块",
+      "source_doc": "车身Tecnomatix仿真后台数据存放规范"
+    },
+    {
+      "name": "Sysroot",
+      "type": "directory",
+      "summary": "仿真后台根目录",
+      "source_doc": "车身Tecnomatix仿真后台数据存放规范"
+    },
+    {
+      "name": "Process Designer/Process Simulate (PD/PS)",
+      "type": "software",
+      "summary": "西门子工艺规划及仿真软件",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "name": "Plant Simulation",
+      "type": "software",
+      "summary": "西门子生产线仿真软件",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "name": ".step",
+      "type": "file_format",
+      "summary": "三维模型交换格式",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".CATPart",
+      "type": "file_format",
+      "summary": "CATIA三维模型格式",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".3dxml",
+      "type": "file_format",
+      "summary": "CATIA模型数据冻结前的过程数据格式",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".xml",
+      "type": "file_format",
+      "summary": "仿真文件数据格式",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".pod",
+      "type": "file_format",
+      "summary": "点云数据格式，可直接导入PS软件查看",
+      "source_doc": "车身设备数模结构要求"
+    }
+  ],
+  "claims": [
+    {
+      "title": "参考点数据拟合误差",
+      "content": "参考点数据拟合误差须≤1mm，若出现数据拟合误差大于1mm的情况，必须重新选取参考点进行测量、拟合",
+      "category": "parameter",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "title": "划点误差",
+      "content": "划点误差≤0.3mm",
+      "category": "parameter",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "title": "靶座安装高度",
+      "content": "高度在2.5～4米之间高低错落分布",
+      "category": "parameter",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "title": "地面坐标原点Z值",
+      "content": "所有工装设备以地面为基准，地面坐标原点Z值为0",
+      "category": "parameter",
+      "source_doc": "仿真数据终验收规范"
+    },
+    {
+      "title": "机器人初始姿态",
+      "content": "所有机器人初始姿态必须为Home位",
+      "category": "parameter",
+      "source_doc": "仿真数据终验收规范"
+    },
+    {
+      "title": "机器人轨迹完整性",
+      "content": "所有机器人轨迹完整、无缺失，包括生产轨迹和服务轨迹",
+      "category": "process",
+      "source_doc": "仿真数据终验收规范"
+    },
+    {
+      "title": "机器人TCP、伺服值、七轴值设置",
+      "content": "所有机器人轨迹点的TCP、伺服值、七轴值等设置完整，选择任意轨迹点可以直接跳转",
+      "category": "parameter",
+      "source_doc": "仿真数据终验收规范"
+    },
+    {
+      "title": "2D_Layout节点位置",
+      "content": "仅每条线体的第一个工位有2D_Layout节点，该线体的相关2D底图存放到此节点。不得放到其他位置",
+      "category": "definition",
+      "source_doc": "仿真数据节点层级规范"
+    },
+    {
+      "title": "导航树结构",
+      "content": "已有层级结构不允许更改",
+      "category": "definition",
+      "source_doc": "仿真数据节点层级规范"
+    },
+    {
+      "title": "仿真评审次数",
+      "content": "仿真数据分两次评审、两次验收",
+      "category": "process",
+      "source_doc": "仿真评审及交付物要求"
+    },
+    {
+      "title": "第一次评审时间节点",
+      "content": "工艺方案定版、长周期设备确定前一周",
+      "category": "process",
+      "source_doc": "仿真评审及交付物要求"
+    },
+    {
+      "title": "第二次评审时间节点",
+      "content": "图纸会签前一周",
+      "category": "process",
+      "source_doc": "仿真评审及交付物要求"
+    },
+    {
+      "title": "预验收时间节点",
+      "content": "设备进厂前一周",
+      "category": "process",
+      "source_doc": "仿真评审及交付物要求"
+    },
+    {
+      "title": "连接可达率",
+      "content": "保证所有连接（包括点焊、SPR、FDS、螺栓拧紧、植焊、涂胶、滚边等所有工艺）可达率100%",
+      "category": "parameter",
+      "source_doc": "仿真评审及交付物要求"
+    },
+    {
+      "title": "工位命名格式",
+      "content": "工位代号+_工艺内容代号。其中工位代号为工艺规划时为每个工位设定的编号，结构为线体代码+顺次编号",
+      "category": "definition",
+      "source_doc": "仿真资源命名规则"
+    },
+    {
+      "title": "机器人命名格式",
+      "content": "工位代号+R+编号。其中编号由两位阿拉伯数字组成，分拼线根据工位内的机器人数量，以01、02、03…规律递增，主线根据工位内机器人数量左单（01、03、05）右双（02、04、06）",
+      "category": "definition",
+      "source_doc": "仿真资源命名规则"
+    },
+    {
+      "title": "机器人程序命名",
+      "content": "生产程序节点下包括机器人的生产轨迹，命名格式为机器人代号+工艺内容",
+      "category": "definition",
+      "source_doc": "仿真资源命名规则"
+    },
+    {
+      "title": "机器人工具命名格式",
+      "content": "工位代号+工具类型+机器人编号+_工具编号。其中编号要求同2.2中所述",
+      "category": "definition",
+      "source_doc": "仿真资源命名规则"
+    },
+    {
+      "title": "工装/设备命名格式",
+      "content": "工位代号+工装/设备类型+设备编号。其中编号要求同3.2中所述",
+      "category": "definition",
+      "source_doc": "仿真资源命名规则"
+    },
+    {
+      "title": "工艺轨迹点命名",
+      "content": "工艺点命名沿用产品连接点的原始ID号，如某SPR点的焊点ID号为01SPR_FE0001554_001，则该工艺点命名即为01SPR_FE0001554_001",
+      "category": "definition",
+      "source_doc": "仿真资源命名规则"
+    },
+    {
+      "title": "仿真范围要求",
+      "content": "要求项目实施范围内的所有工位进行仿真，包含工艺循环以及服务程序循环的所有步骤",
+      "category": "process",
+      "source_doc": "仿真过程参数要求"
+    },
+    {
+      "title": "干涉验证要求",
+      "content": "在整个循环内都不存在干涉现象，机器人之间的干涉区需验证及安全区设置",
+      "category": "process",
+      "source_doc": "仿真过程参数要求"
+    },
+    {
+      "title": "地缝位置避让",
+      "content": "布局中须体现地缝位置，避免安装点放到地缝上",
+      "category": "process",
+      "source_doc": "仿真过程参数要求"
+    },
+    {
+      "title": "数模与实物一致性",
+      "content": "数模必须与真实设备一致，结构完整，包含传感器、水气管、线槽等",
+      "category": "definition",
+      "source_doc": "仿真过程参数要求"
+    },
+    {
+      "title": "机器人BASE偏差标准",
+      "content": "理论值与仿真值偏差≤5mm则满足精度要求，≥5mm需整改",
+      "category": "parameter",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "激光跟踪仪精度要求",
+      "content": "精度≤20µm+6µm/m，重复精度10µm+4µm/m，测距误差≤20µm",
+      "category": "parameter",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "单站测量半径",
+      "content": "激光跟踪仪单站测量半径≥20m",
+      "category": "parameter",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "机器人可用性",
+      "content": "0.999995",
+      "category": "parameter",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "title": "设备故障修复时间",
+      "content": "5分钟（所有设备类型统一标准）",
+      "category": "parameter",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "title": "焊钳数模要求",
+      "content": "必须保证焊钳数模的功能性与尺寸，正常情况下由焊钳制造商提供",
+      "category": "definition",
+      "source_doc": "仿真过程参数要求"
+    },
+    {
+      "title": "工具切换系统定义",
+      "content": "必须被分解为机器人端和工具端，并且定义好安装坐标",
+      "category": "process",
+      "source_doc": "仿真过程参数要求"
+    },
+    {
+      "title": "七轴机器人姿态测量",
+      "content": "工艺过程集中在轨道运动某个位置时，需编制至少10个不同的伸展姿态",
+      "category": "process",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "软件版本要求",
+      "content": "PD/PS软件为16.1.2版本，Plant Simulation为16.0版本",
+      "category": "parameter",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "title": "仿真范围要求",
+      "content": "项目实施范围内的所有工位必须进行数字化仿真，包含上件、工装运动、连接、输送、人工操作等所有工艺流程",
+      "category": "process",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "title": "机器人离线编程要求",
+      "content": "项目实施范围内的所有机器人要求离线编程，包括所有车型、所有轨迹",
+      "category": "process",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "title": "PLC区域虚拟调试要求",
+      "content": "项目实施范围内的所有线体PLC区域要求虚拟调试",
+      "category": "process",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "title": "模型单位要求",
+      "content": "所有模型设计和标注基本单位须为'mm'，尺寸标注数据小数点后保留2位小数",
+      "category": "parameter",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "title": "模型比例要求",
+      "content": "所有设备模型设计尺寸与实物比例为1:1",
+      "category": "parameter",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "title": "仿真文件输出格式",
+      "content": "仿真文件要求在Tecnomatix（PD/PS）软件环境下输出，格式要求为'.xml文件+后台数据包'，其中后台数据须清除所有过程及无关数据",
+      "category": "process",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "title": "点云数据格式",
+      "content": "现场设备扫描的点云数据要求为'.pod'格式，要求可以直接导入PS软件查看",
+      "category": "parameter",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "title": "仿真数据冻结前过程数据格式",
+      "content": "仿真数据冻结之前的过程数据可用'.psz'或'.pgz'格式",
+      "category": "parameter",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "title": "坐标原点定义",
+      "content": "所有工装模型以车身坐标的原点为原点。若同一工装涉及多种车型，则以基本车型的原点为坐标原点",
+      "category": "definition",
+      "source_doc": "车身设备数模结构要求"
+    }
+  ],
+  "contradictions": [
+    {
+      "doc1": "仿真评审及交付物要求",
+      "doc2": "仿真数据终验收规范",
+      "description": "机器人初始姿态要求不一致。文档1明确'所有机器人初始姿态必须为Home位'，而文档4仅要求'机器人初步轨迹设置完成'和'所有运动轨迹设置干涉检查，且过程中无干涉'，未明确初始姿态必须为Home位",
+      "param": "机器人初始姿态",
+      "value1": "必须为Home位",
+      "value2": "未明确指定，仅要求轨迹设置完成且无干涉"
+    },
+    {
+      "doc1": "仿真评审及交付物要求",
+      "doc2": "仿真数据终验收规范",
+      "description": "机器人初始姿态要求不一致。文档1明确'所有机器人初始姿态必须为Home位'，而文档4仅要求'机器人初步轨迹设置完成'和'所有运动轨迹设置干涉检查，且过程中无干涉'，未明确初始姿态必须为Home位",
+      "param": "机器人初始姿态",
+      "value1": "必须为Home位",
+      "value2": "未明确指定，仅要求轨迹设置完成且无干涉"
+    },
+    {
+      "doc1": "机器人BASE测量及计算规范",
+      "doc2": "小米汽车Plant Simulation仿真计算标准_to 供应商",
+      "description": "激光跟踪仪精度参数不一致。Doc1明确规格为'精度≤20µm+6µm/m，重复精度10µm+4µm/m'，而Doc2表格中仅列出设备名称和参数值，未包含激光跟踪仪精度规格",
+      "param": "激光跟踪仪精度",
+      "value1": "≤20µm+6µm/m，重复精度10µm+4µm/m",
+      "value2": "未定义（仅提及单站测量半径≥20m）"
+    },
+    {
+      "doc1": "机器人BASE测量及计算规范",
+      "doc2": "小米汽车Plant Simulation仿真计算标准_to 供应商",
+      "description": "机器人BASE偏差判定标准不一致。Doc1明确规定'若偏差值≤5mm，则说明理论机器人BASE满足精度要求，若偏差值≥5mm，则需整改'，而Doc2表格中未包含机器人BASE偏差标准",
+      "param": "机器人BASE偏差判定阈值",
+      "value1": "≤5mm满足，≥5mm需整改",
+      "value2": "未定义"
+    },
+    {
+      "doc1": "仿真过程参数要求",
+      "doc2": "机器人BASE测量及计算规范",
+      "description": "七轴机器人姿态测量数量要求不一致。Doc1未明确七轴机器人姿态测量具体要求，而Doc2规定'编制至少10个不同的伸展姿态'且'运行整个程序（至少15-20个姿态）'",
+      "param": "七轴机器人伸展姿态数量",
+      "value1": "未明确（仅要求'至少10个不同的伸展姿态'）",
+      "value2": "至少15-20个姿态"
+    },
+    {
+      "doc1": "车身线仿真、离线及虚拟调试技术要求总则",
+      "doc2": "车身设备数模结构要求",
+      "description": "软件平台要求不一致。总则明确要求使用西门子Process Designer/Process Simulate(PD/PS)以及Plant Simulation软件进行工艺规划及仿真工作，而数模结构要求中多次提及Tecnomatix（PD/PS）软件环境，未明确提及Plant Simulation的使用场景",
+      "param": "仿真软件平台",
+      "value1": "西门子Process Designer/Process Simulate(PD/PS)以及Plant Simulation",
+      "value2": "Tecnomatix（PD/PS）软件环境"
+    },
+    {
+      "doc1": "车身线仿真、离线及虚拟调试技术要求总则",
+      "doc2": "车身设备数模结构要求",
+      "description": "仿真数据冻结前过程数据格式不一致。总则附件2《车身Tecnomatix仿真后台数据存放规范》中未明确说明冻结前过程数据格式，而数模结构要求明确规定为'.psz'或'.pgz'格式",
+      "param": "仿真数据冻结前过程数据格式",
+      "value1": "未明确说明（仅提及后台数据包）",
+      "value2": ".psz或.pgz格式"
+    }
+  ],
+  "stats": {
+    "total_articles": 33,
+    "total_entities": 27,
+    "total_claims": 42,
+    "total_contradictions": 7
+  }
+}

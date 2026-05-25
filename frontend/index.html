@@ -45,6 +45,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #
   <h1>📚 机器人知识库</h1>
   <nav>
     <a href="/">搜索</a>
+    <a href="/graph.html">知识图谱</a>
     <a href="/conflicts.html">冲突管理</a>
   </nav>
 </div>
@@ -133,10 +134,33 @@ function switchTab(cat, el) {
   search();
 }
 
+async function loadAllDocuments() {
+  const r = await fetch('/api/documents');
+  const docs = await r.json();
+  const el = document.getElementById('results');
+  if (docs.length === 0) {
+    el.innerHTML = '<div class="empty">暂无文档</div>';
+    return;
+  }
+  el.innerHTML = docs.map(d =>
+    '<div class="result-item" onclick="openDoc(\'' + d.id + '\')">' +
+      '<div class="result-title">' + esc(d.title) + '</div>' +
+      '<div class="result-meta">' +
+        (d.category ? '<span class="badge">' + esc(d.category) + '</span>' : '') +
+        (d.filename ? '<span>' + esc(d.filename) + '</span>' : '') +
+        (d.created_at ? '<span>' + esc(d.created_at.slice(0,10)) + '</span>' : '') +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+
 async function search() {
   const q = document.getElementById('searchInput').value.trim();
   document.getElementById('suggestions').style.display = 'none';
-  if (!q) return;
+  if (!q) {
+    loadAllDocuments();
+    return;
+  }
   const url = '/api/search?q=' + encodeURIComponent(q) + '&top_k=20' + (currentCategory ? '&category=' + encodeURIComponent(currentCategory) : '');
   const r = await fetch(url);
   const data = await r.json();
@@ -163,6 +187,9 @@ function openDoc(id) {
 }
 
 function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// 页面加载时显示所有文档
+loadAllDocuments();
 </script>
 </body>
 </html>

@@ -1,0 +1,10 @@
+description: '语义相似度 87%，重叠关键词: 七轴, 功能, 工位号, 序号, 抽芯拉铆'
+final_spec: 删除，excel 转换成 md 效果不佳
+proposed_at: '2026-05-21T23:09:58.630573'
+proposer: 系统（全量扫描）
+related_docs:
+- 机器人清单_带价格（带C号）
+- MX11&MS11-U机器人需求清单V0.4
+resolved_at: '2026-05-21T23:33:51.037111'
+status: 已解决
+title: '疑似重复/冲突: 机器人清单_带价格（带C号） ↔ MX11&MS11-U机器人需求清单V0.4'

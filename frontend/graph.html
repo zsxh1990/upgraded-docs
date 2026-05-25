@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知识图谱 — 机器人知识库</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0d1117; color: #c9d1d9; overflow: hidden; }
+.header { background: #161b22; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 24px; border-bottom: 1px solid #30363d; z-index: 10; position: relative; }
+.header h1 { font-size: 18px; }
+.header nav { display: flex; gap: 16px; }
+.header nav a { color: #8b949e; text-decoration: none; font-size: 14px; }
+.header nav a:hover { color: #fff; }
+.header nav a.active { color: #58a6ff; }
+.stats-bar { display: flex; gap: 16px; font-size: 13px; color: #8b949e; }
+.stats-bar span { background: #21262d; padding: 2px 8px; border-radius: 4px; }
+#graph-container { width: 100vw; height: calc(100vh - 48px); }
+svg { width: 100%; height: 100%; }
+.node circle { stroke-width: 2px; cursor: pointer; }
+.node text { font-size: 11px; fill: #c9d1d9; pointer-events: none; }
+.link { stroke-opacity: 0.4; }
+.link.contradicts { stroke: #f85149; stroke-width: 3px; stroke-opacity: 0.8; }
+.tooltip { position: absolute; background: #1c2128; border: 1px solid #30363d; border-radius: 8px; padding: 12px; font-size: 13px; max-width: 400px; display: none; z-index: 100; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.tooltip h3 { color: #58a6ff; margin-bottom: 6px; font-size: 14px; }
+.tooltip .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; margin-right: 4px; }
+.tooltip .tag.article { background: #1f6feb33; color: #58a6ff; }
+.tooltip .tag.entity { background: #23863633; color: #3fb950; }
+.tooltip .tag.claim { background: #9e6a0333; color: #d29922; }
+.tooltip .tag.topic { background: #8957e533; color: #bc8cff; }
+.tooltip .tag.contradiction { background: #f8514933; color: #f85149; }
+.legend { position: absolute; bottom: 16px; left: 16px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; font-size: 12px; }
+.legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+.panel { position: absolute; top: 60px; right: 16px; width: 320px; max-height: calc(100vh - 80px); background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; overflow-y: auto; display: none; z-index: 10; }
+.panel h3 { color: #58a6ff; margin-bottom: 8px; }
+.panel .close { position: absolute; top: 8px; right: 12px; cursor: pointer; color: #8b949e; font-size: 18px; }
+.panel .close:hover { color: #fff; }
+.panel-item { padding: 8px 0; border-bottom: 1px solid #21262d; }
+.panel-item:last-child { border-bottom: none; }
+.search-bar { position: absolute; top: 60px; left: 16px; z-index: 10; }
+.search-bar input { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px 12px; color: #c9d1d9; font-size: 14px; width: 260px; outline: none; }
+.search-bar input:focus { border-color: #58a6ff; }
+.search-results { background: #161b22; border: 1px solid #30363d; border-radius: 6px; margin-top: 4px; max-height: 300px; overflow-y: auto; display: none; }
+.search-results div { padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #21262d; }
+.search-results div:hover { background: #21262d; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>知识图谱</h1>
+  <nav>
+    <a href="/">搜索</a>
+    <a href="/graph.html" class="active">图谱</a>
+    <a href="/conflicts.html">冲突管理</a>
+  </nav>
+  <div class="stats-bar" id="statsBar"></div>
+  <button onclick="syncToObsidian()" style="background:#238636;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px;">同步到 Obsidian</button>
+</div>
+
+<div class="search-bar">
+  <input id="searchInput" placeholder="搜索节点..." oninput="onSearch()" onkeydown="if(event.key==='Escape') hideSearch()">
+  <div class="search-results" id="searchResults"></div>
+</div>
+
+<div id="graph-container">
+  <svg id="svg"></svg>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div> 文档 (article)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bc8cff"></div> 主题 (topic)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div> 实体 (entity)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d29922"></div> 声明 (claim)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f85149; width:24px; height:3px; border-radius:2px"></div> 矛盾 (contradicts)</div>
+</div>
+
+<div class="panel" id="panel">
+  <span class="close" onclick="closePanel()">&times;</span>
+  <div id="panelContent"></div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const COLORS = {
+  article: '#58a6ff',
+  topic: '#bc8cff',
+  entity: '#3fb950',
+  claim: '#d29922',
+};
+const SIZES = {
+  article: 12,
+  topic: 16,
+  entity: 8,
+  claim: 6,
+};
+
+let graphData = null;
+let simulation = null;
+let svg, g, linkGroup, nodeGroup;
+
+async function loadGraph() {
+  const resp = await fetch('/api/graph');
+  graphData = await resp.json();
+  renderStats();
+  renderGraph();
+}
+
+function renderStats() {
+  const s = graphData.stats;
+  document.getElementById('statsBar').innerHTML =
+    `<span>节点 ${s.totalNodes}</span>` +
+    `<span>边 ${s.totalEdges}</span>` +
+    `<span>矛盾 ${(s.edgeTypes.contradicts || 0)}</span>`;
+}
+
+function renderGraph() {
+  const container = document.getElementById('graph-container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  svg = d3.select('#svg')
+    .attr('viewBox', [0, 0, width, height]);
+
+  // 清空
+  svg.selectAll('*').remove();
+
+  // 缩放
+  const zoom = d3.zoom()
+    .scaleExtent([0.1, 4])
+    .on('zoom', (e) => g.attr('transform', e.transform));
+  svg.call(zoom);
+
+  g = svg.append('g');
+
+  // 箭头定义
+  svg.append('defs').append('marker')
+    .attr('id', 'arrowhead')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 20)
+    .attr('refY', 0)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', '#30363d');
+
+  // 边
+  linkGroup = g.append('g').attr('class', 'links');
+  const links = graphData.edges.map(e => ({
+    source: e.source,
+    target: e.target,
+    type: e.type,
+    description: e.description || '',
+    contradictionMeta: e.contradictionMeta || {},
+  }));
+
+  // 节点
+  nodeGroup = g.append('g').attr('class', 'nodes');
+  const nodes = graphData.nodes.map(n => ({
+    id: n.id,
+    name: n.name,
+    type: n.type,
+    summary: n.summary || '',
+    tags: n.tags || [],
+    knowledgeMeta: n.knowledgeMeta || {},
+    entityMeta: n.entityMeta || {},
+    claimMeta: n.claimMeta || {},
+  }));
+
+  // 力导向仿真
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(80))
+    .force('charge', d3.forceManyBody().strength(-120))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => (SIZES[d.type] || 8) + 4));
+
+  // 渲染边
+  const link = linkGroup.selectAll('line')
+    .data(links)
+    .join('line')
+    .attr('class', d => 'link' + (d.type === 'contradicts' ? ' contradicts' : ''))
+    .attr('stroke', d => d.type === 'contradicts' ? '#f85149' : '#30363d')
+    .attr('marker-end', 'url(#arrowhead)');
+
+  // 渲染节点
+  const node = nodeGroup.selectAll('g')
+    .data(nodes)
+    .join('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+      .on('start', dragStarted)
+      .on('drag', dragged)
+      .on('end', dragEnded));
+
+  node.append('circle')
+    .attr('r', d => SIZES[d.type] || 8)
+    .attr('fill', d => COLORS[d.type] || '#8b949e')
+    .attr('stroke', d => d.type === 'claim' ? '#d29922' : 'none')
+    .on('mouseover', showTooltip)
+    .on('mouseout', hideTooltip)
+    .on('click', showPanel);
+
+  node.append('text')
+    .attr('dx', d => (SIZES[d.type] || 8) + 4)
+    .attr('dy', 3)
+    .text(d => d.name.length > 20 ? d.name.slice(0, 20) + '…' : d.name);
+
+  simulation.on('tick', () => {
+    link
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+
+  // 初始缩放适配
+  svg.call(zoom.transform, d3.zoomIdentity.translate(0, 0).scale(0.8));
+}
+
+function dragStarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x; d.fy = d.y;
+}
+function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+function dragEnded(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null; d.fy = null;
+}
+
+function showTooltip(event, d) {
+  const tip = document.getElementById('tooltip');
+  let html = `<h3>${d.name}</h3>`;
+  html += `<span class="tag ${d.type}">${d.type}</span>`;
+  if (d.summary) html += `<p style="margin-top:6px;color:#8b949e">${d.summary.slice(0,150)}</p>`;
+  // 显示关联的矛盾
+  const contradictions = graphData.edges.filter(e =>
+    e.type === 'contradicts' && (e.source === d.id || e.target === d.target || e.source?.id === d.id || e.target?.id === d.id)
+  );
+  if (contradictions.length > 0) {
+    html += `<p style="margin-top:6px;color:#f85149">⚠️ ${contradictions.length} 个矛盾</p>`;
+  }
+  tip.innerHTML = html;
+  tip.style.display = 'block';
+  tip.style.left = (event.pageX + 16) + 'px';
+  tip.style.top = (event.pageY - 10) + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+
+function showPanel(event, d) {
+  const panel = document.getElementById('panel');
+  const content = document.getElementById('panelContent');
+  let html = `<h3>${d.name}</h3>`;
+  html += `<p style="color:#8b949e;margin:8px 0">${d.summary}</p>`;
+
+  // 关联边
+  const related = graphData.edges.filter(e =>
+    e.source === d.id || e.target === d.id || e.source?.id === d.id || e.target?.id === d.id
+  );
+  if (related.length > 0) {
+    html += `<h4 style="margin-top:12px;color:#58a6ff">关联 (${related.length})</h4>`;
+    related.forEach(e => {
+      const otherId = (e.source === d.id || e.source?.id === d.id) ? (e.target?.id || e.target) : (e.source?.id || e.source);
+      const other = graphData.nodes.find(n => n.id === otherId);
+      const color = e.type === 'contradicts' ? '#f85149' : '#8b949e';
+      html += `<div class="panel-item" style="color:${color}">`;
+      html += `<strong>${e.type}</strong> → ${other ? other.name : otherId}`;
+      if (e.description) html += `<br><small>${e.description.slice(0,100)}</small>`;
+      html += `</div>`;
+    });
+  }
+
+  content.innerHTML = html;
+  panel.style.display = 'block';
+}
+
+function closePanel() {
+  document.getElementById('panel').style.display = 'none';
+}
+
+// 搜索
+function onSearch() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const box = document.getElementById('searchResults');
+  if (q.length < 1) { box.style.display = 'none'; return; }
+  const matches = graphData.nodes.filter(n =>
+    n.name.toLowerCase().includes(q) || (n.summary || '').toLowerCase().includes(q)
+  ).slice(0, 15);
+  if (matches.length === 0) { box.style.display = 'none'; return; }
+  box.innerHTML = matches.map(n =>
+    `<div onclick="focusNode('${n.id}')"><span style="color:${COLORS[n.type] || '#8b949e'}">●</span> ${n.name} <small style="color:#8b949e">(${n.type})</small></div>`
+  ).join('');
+  box.style.display = 'block';
+}
+
+function hideSearch() {
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('searchInput').value = '';
+}
+
+function focusNode(id) {
+  hideSearch();
+  const node = graphData.nodes.find(n => n.id === id);
+  if (!node) return;
+  // 高亮节点
+  d3.selectAll('.node circle').attr('opacity', 0.2);
+  d3.selectAll('.link').attr('opacity', 0.05);
+  d3.selectAll('.node').filter(d => d.id === id).select('circle').attr('opacity', 1).attr('stroke-width', 4);
+  // 高亮关联边
+  d3.selectAll('.link').filter(d => (d.source?.id || d.source) === id || (d.target?.id || d.target) === id)
+    .attr('opacity', 1);
+  // 3秒后恢复
+  setTimeout(() => {
+    d3.selectAll('.node circle').attr('opacity', 1).attr('stroke-width', 2);
+    d3.selectAll('.link').attr('opacity', null);
+  }, 3000);
+}
+
+async function syncToObsidian() {
+  if (!confirm('确认同步知识图谱数据到 Obsidian？\n\n这将在对应笔记中添加矛盾、实体、声明的标注。')) return;
+
+  try {
+    const resp = await fetch('/api/obsidian/sync-graph', { method: 'POST' });
+    const stats = await resp.json();
+
+    if (stats.error) {
+      alert('同步失败: ' + stats.error);
+      return;
+    }
+
+    const msg = [
+      '同步完成！',
+      '',
+      '写入标注:',
+      '  矛盾: ' + stats.contradictions_written + ' 条',
+      '  实体: ' + stats.entities_written + ' 条',
+      '  声明: ' + stats.claims_written + ' 条',
+    ];
+
+    if (stats.errors && stats.errors.length > 0) {
+      msg.push('', '错误 (' + stats.errors.length + '):');
+      stats.errors.slice(0, 5).forEach(e => msg.push('  - ' + e));
+    }
+
+    alert(msg.join('\n'));
+  } catch (e) {
+    alert('同步请求失败: ' + e.message);
+  }
+}
+
+loadGraph();
+</script>
+</body>
+</html>

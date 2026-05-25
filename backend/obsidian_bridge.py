@@ -196,6 +196,129 @@ def write_annotation(note_path: str, annotation: str) -> bool:
                     {"content": new_content})
 
 
+def sync_knowledge_graph_to_obsidian(graph_data: dict) -> dict:
+    """将知识图谱数据同步回 Obsidian 笔记。
+
+    将矛盾、实体、声明写入对应笔记的 YAML frontmatter。
+    """
+    nodes = graph_data.get("nodes", [])
+    edges = graph_data.get("edges", [])
+
+    stats = {
+        "contradictions_written": 0,
+        "entities_written": 0,
+        "claims_written": 0,
+        "errors": [],
+    }
+
+    # 1. 提取矛盾边，写入对应文档
+    contradictions = [e for e in edges if e.get("type") == "contradicts"]
+    for c in contradictions:
+        source_id = c.get("source", "")
+        target_id = c.get("target", "")
+
+        # 找到对应的文档节点
+        source_node = next((n for n in nodes if n["id"] == source_id), None)
+        target_node = next((n for n in nodes if n["id"] == target_id), None)
+
+        if not source_node or not target_node:
+            continue
+
+        # 生成标注内容
+        desc = c.get("description", "参数/流程冲突")
+        meta = c.get("contradictionMeta", {})
+        annotation = (
+            f"**矛盾检测**\n"
+            f"- 对象: {target_node.get('name', target_id)}\n"
+            f"- 描述: {desc}\n"
+        )
+        if meta.get("param"):
+            annotation += f"- 参数: {meta['param']}\n"
+        if meta.get("value1") and meta.get("value2"):
+            annotation += f"- 本文件值: {meta['value1']}\n- 对比文件值: {meta['value2']}\n"
+
+        # 查找对应 Obsidian 笔记路径
+        source_doc = source_node.get("knowledgeMeta", {}).get("sourceDoc", "")
+        if source_doc:
+            note_path = _find_note_path(source_doc)
+            if note_path:
+                ok = write_annotation(note_path, annotation)
+                if ok:
+                    stats["contradictions_written"] += 1
+                else:
+                    stats["errors"].append(f"写入失败: {note_path}")
+
+    # 2. 提取实体，写入源文档
+    entity_nodes = [n for n in nodes if n.get("type") == "entity"]
+    for entity in entity_nodes:
+        entity_meta = entity.get("entityMeta", {})
+        source_doc = entity_meta.get("sourceDoc", "")
+        if not source_doc:
+            continue
+
+        name = entity.get("name", "")
+        summary = entity.get("summary", "")
+        entity_type = entity_meta.get("entityType", "unknown")
+
+        annotation = (
+            f"**实体识别**\n"
+            f"- 名称: {name}\n"
+            f"- 类型: {entity_type}\n"
+            f"- 描述: {summary}\n"
+        )
+
+        note_path = _find_note_path(source_doc)
+        if note_path:
+            ok = write_annotation(note_path, annotation)
+            if ok:
+                stats["entities_written"] += 1
+            else:
+                stats["errors"].append(f"写入失败: {note_path}")
+
+    # 3. 提取声明，写入源文档
+    claim_nodes = [n for n in nodes if n.get("type") == "claim"]
+    for claim in claim_nodes:
+        claim_meta = claim.get("claimMeta", {})
+        source_doc = claim_meta.get("sourceDoc", "")
+        if not source_doc:
+            continue
+
+        title = claim.get("name", "")
+        content = claim.get("summary", "")
+        category = claim_meta.get("category", "unknown")
+
+        annotation = (
+            f"**关键声明**\n"
+            f"- 标题: {title}\n"
+            f"- 类别: {category}\n"
+            f"- 内容: {content[:200]}\n"
+        )
+
+        note_path = _find_note_path(source_doc)
+        if note_path:
+            ok = write_annotation(note_path, annotation)
+            if ok:
+                stats["claims_written"] += 1
+            else:
+                stats["errors"].append(f"写入失败: {note_path}")
+
+    return stats
+
+
+def _find_note_path(doc_name: str) -> str | None:
+    """根据文档名查找 Obsidian 笔记路径。"""
+    notes = list_notes()
+    # 尝试精确匹配
+    for n in notes:
+        if n["name"] == doc_name or doc_name in n["name"]:
+            return n["path"]
+    # 尝试模糊匹配
+    for n in notes:
+        if doc_name.lower() in n["name"].lower():
+            return n["path"]
+    return None
+
+
 # ── 监控（轮询模式） ──
 
 class ObsidianWatcher:

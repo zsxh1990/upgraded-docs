@@ -1,0 +1,1159 @@
+{
+  "entities": [
+    {
+      "name": "FANUC R30iB",
+      "type": "device",
+      "summary": "FANUC机器人R30iB系列，附带Profinet通信选项",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "name": "Tecnomatix",
+      "type": "software",
+      "summary": "西门子工业软件品牌，包含Process Designer和Process Simulate两个产品",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 15706-2012",
+      "type": "standard",
+      "summary": "机械安全 基本概念和设计通则国家标准",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 16856-2015",
+      "type": "standard",
+      "summary": "机械安全 风险评估实施指南和方法举例国家标准",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 16855.2-2015",
+      "type": "standard",
+      "summary": "机械安全 控制系统安全相关部件第2部分：确认国家标准",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB 16754",
+      "type": "standard",
+      "summary": "机械安全 急停设计原则国家标准，版本GB-2021",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 20438.3-2017",
+      "type": "standard",
+      "summary": "电气/电子/可编程电子安全相关系统的功能安全第3部分：软件要求国家标准",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 28526-2012",
+      "type": "standard",
+      "summary": "机械电气安全 安全相关电气、电子和可编程电子控制系统的功能安全国家标准",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 5226.1-2019",
+      "type": "standard",
+      "summary": "机械电气安全 机械电气设备第1部分：通用技术条件国家标准",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 39529-2020",
+      "type": "standard",
+      "summary": "机器人用柔性电缆通用技术条件国家标准",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 26119-2023",
+      "type": "standard",
+      "summary": "工业机器人安全规范国家标准",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 39529-2020",
+      "type": "standard",
+      "summary": "机器人用柔性电缆通用技术条件国家标准",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "name": "MI_FAP",
+      "type": "software",
+      "summary": "包括所有应用的标准安装包MI_FAP架构",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "name": "SpotTool+",
+      "type": "software",
+      "summary": "FANUC标准软件包，根据灵活产线适配不同机器人应用",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "name": "Ethernet IP",
+      "type": "file_format",
+      "summary": "现场总线协议类型之一",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "name": "Profinet",
+      "type": "file_format",
+      "summary": "实时工业以太网协议类型之一",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "name": "EtherCAT",
+      "type": "file_format",
+      "summary": "以太网控制自动化技术协议类型之一",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "name": "Tecnomatix",
+      "type": "software",
+      "summary": "西门子工业软件品牌，包含Process Designer和Process Simulate两个产品",
+      "source_doc": "领域背景知识"
+    },
+    {
+      "name": "Process Designer",
+      "type": "software",
+      "summary": "Tecnomatix套件中的工艺设计软件，简称PD",
+      "source_doc": "领域背景知识"
+    },
+    {
+      "name": "Process Simulate",
+      "type": "software",
+      "summary": "Tecnomatix套件中的仿真软件，简称PS",
+      "source_doc": "领域背景知识"
+    },
+    {
+      "name": "Plant Simulation",
+      "type": "software",
+      "summary": "Tecnomatix套件中的物流仿真工具，与PD/PS互补",
+      "source_doc": "领域背景知识"
+    },
+    {
+      "name": "GB/T 15706-2012",
+      "type": "standard",
+      "summary": "机械安全设计通则 风险评估与减小",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 16856-2015",
+      "type": "standard",
+      "summary": "机械安全 风险评估实施指南和方法举例",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 16855.2-2015",
+      "type": "standard",
+      "summary": "机械安全 控制系统安全相关部件 第2部分：确认",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "GB 16754",
+      "type": "standard",
+      "summary": "机械安全 急停设计原则",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 20438.3-2017",
+      "type": "standard",
+      "summary": "电气/电子/可编程电子安全相关系统的功能安全 第3部分：软件要求",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "GB 28526-2012",
+      "type": "standard",
+      "summary": "机械电气安全 安全相关电气、电子和可编程电子控制系统的功能安全",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 19876-2012",
+      "type": "standard",
+      "summary": "机械安全 与人体部位接近速度相关的安全防护装置的定位",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "GB/T 5226.1-2019",
+      "type": "standard",
+      "summary": "机械电气安全 机械电气设备 第1部分：通用技术条件",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "ISO 14122",
+      "type": "standard",
+      "summary": "机械安全 进入机器和工业设备的固定设施",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "ISO 14121",
+      "type": "standard",
+      "summary": "机械安全 风险评估",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "ISO 13849-1",
+      "type": "standard",
+      "summary": "机械安全 控制系统有关安全部件设计通则",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "ISO 12100:2010",
+      "type": "standard",
+      "summary": "机械安全 基本概念和设计通则",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "IEC 60825-1",
+      "type": "standard",
+      "summary": "激光安全等级分类",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "GB 12348-2008",
+      "type": "standard",
+      "summary": "工业企业厂界环境噪声排放标准",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "Fanuc R2000",
+      "type": "device",
+      "summary": "Fanuc机器人常规系列型号之一",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "Fanuc M900",
+      "type": "device",
+      "summary": "Fanuc机器人常规系列型号之一",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "name": "Intel i5-13400",
+      "type": "device",
+      "summary": "工控机CPU型号要求，视觉引导场景最低配置",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "name": "GB 19517-2009",
+      "type": "standard",
+      "summary": "供电电压允许波动范围符合的强制性国标要求",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "name": "GB/T 3047.1-1995",
+      "type": "standard",
+      "summary": "柜体设计符合的标准化尺寸要求",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "name": "GB/T 4208-2017",
+      "type": "standard",
+      "summary": "电柜通用要求国家标准，等同IEC 60529",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "name": "GB 50054-2011",
+      "type": "standard",
+      "summary": "低压配电设计规范，控制柜供电符合标准",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "name": "GB/T 5226.1-2019",
+      "type": "standard",
+      "summary": "机械电气安全标准，线缆符合该标准要求",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "name": "GB/T 7260.3-2016",
+      "type": "standard",
+      "summary": "UPS选型符合的国家标准要求",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "name": "FANUC R-2000iC",
+      "type": "device",
+      "summary": "TCP校准工具适配的机器人品牌型号之一",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "name": "FANUC M-900iB",
+      "type": "device",
+      "summary": "TCP校准工具适配的机器人品牌型号之一",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "name": "UL94 V-0",
+      "type": "standard",
+      "summary": "线缆绝缘等级阻燃标准",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "name": "MX11",
+      "type": "device",
+      "summary": "车型代号，机器人需求清单适用车型",
+      "source_doc": "MX11&MS11-U机器人需求清单V0.4"
+    },
+    {
+      "name": "MS11-U",
+      "type": "device",
+      "summary": "车型代号，机器人需求清单适用车型",
+      "source_doc": "MX11&MS11-U机器人需求清单V0.4"
+    },
+    {
+      "name": "Tecnomatix",
+      "type": "software",
+      "summary": "西门子工业软件品牌，包含PD和PS两个产品",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "name": "Process Designer",
+      "type": "software",
+      "summary": "Tecnomatix套件中的工艺设计软件，简称PD",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "name": "Process Simulate",
+      "type": "software",
+      "summary": "Tecnomatix套件中的仿真软件，简称PS",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "name": "Plant Simulation",
+      "type": "software",
+      "summary": "Tecnomatix套件中的物流仿真工具，与PD/PS互补",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "name": "Tecnomatix",
+      "type": "software",
+      "summary": "西门子工业软件品牌，包含Process Designer和Process Simulate等产品",
+      "source_doc": "小米PD客户化文件定制说明"
+    },
+    {
+      "name": "Process Designer (PD)",
+      "type": "software",
+      "summary": "Tecnomatix旗下的车身工程仿真设计工具，用于PD客户化文件定制",
+      "source_doc": "小米PD客户化文件定制说明"
+    },
+    {
+      "name": "Process Simulate (PS)",
+      "type": "software",
+      "summary": "Tecnomatix旗下的仿真软件，与PD配套使用",
+      "source_doc": "小米PD客户化文件定制说明"
+    },
+    {
+      "name": "Plant Simulation",
+      "type": "software",
+      "summary": "Tecnomatix套件中的物流仿真工具，用于设备开动率等参数计算",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "name": "GSDML-V2.42-BoschRexrothAG-PRC7000Interface-20230125.xml",
+      "type": "file_format",
+      "summary": "纯点焊（Bosch）应用的GSD文件格式",
+      "source_doc": "小米车身组态文件样例库"
+    },
+    {
+      "name": "GSDML-V2.3-HMS-ABCC-PRT2P-20140703.xml",
+      "type": "file_format",
+      "summary": "纯点焊（商科）应用的GSD文件格式",
+      "source_doc": "小米车身组态文件样例库"
+    },
+    {
+      "name": "GSDML-V2.35-SMC-EX600-SPN3_4-20210125.xml",
+      "type": "file_format",
+      "summary": "纯搬运应用的GSD文件格式",
+      "source_doc": "小米车身组态文件样例库"
+    },
+    {
+      "name": "GSDML-V2.33-AtlasCopco-GENIUS-K-FLOW-FLS-20211129.xml",
+      "type": "file_format",
+      "summary": "FDS应用的GSD文件格式",
+      "source_doc": "小米车身组态文件样例库"
+    },
+    {
+      "name": "M-900iB/280L",
+      "type": "device",
+      "summary": "FANUC机器人型号，用于搬运+七轴+视觉引导功能",
+      "source_doc": "机器人清单_带价格（带C号）"
+    },
+    {
+      "name": "R-2000iC/210F",
+      "type": "device",
+      "summary": "FANUC机器人型号，用于拧紧、涂胶等功能",
+      "source_doc": "机器人清单_带价格（带C号）"
+    },
+    {
+      "name": "M-900iB/400L",
+      "type": "device",
+      "summary": "FANUC机器人型号，用于bestfit功能",
+      "source_doc": "机器人清单_带价格（带C号）"
+    },
+    {
+      "name": "M-900iB/360",
+      "type": "device",
+      "summary": "FANUC机器人型号，用于多种功能配置",
+      "source_doc": "机器人清单_带价格（带C号）"
+    },
+    {
+      "name": "西门子Process Designer/Process Simulate",
+      "type": "software",
+      "summary": "Tecnomatix套件中的机器人仿真软件平台，用于离线编程和虚拟调试",
+      "source_doc": "离线编程及虚拟调试技术要求"
+    },
+    {
+      "name": "GB12348-2008",
+      "type": "standard",
+      "summary": "工业企业厂界环境噪声排放标准（国家标准）",
+      "source_doc": "协作机器人技术规范"
+    },
+    {
+      "name": "ISO 15066:2016",
+      "type": "standard",
+      "summary": "机器人与机器人装备 协作机器人（国际标准）",
+      "source_doc": "协作机器人技术规范"
+    },
+    {
+      "name": "GB/T 36008—2018",
+      "type": "standard",
+      "summary": "机器人与机器人装备 协作机器人（国家标准）",
+      "source_doc": "协作机器人技术规范"
+    },
+    {
+      "name": "ISO 10218-1:2011",
+      "type": "standard",
+      "summary": "工业环境用机器人 安全要求 第1部分：机器人（国际标准）",
+      "source_doc": "协作机器人技术规范"
+    },
+    {
+      "name": "GB 11291.1—2011",
+      "type": "standard",
+      "summary": "工业环境用机器人 安全要求 第1部分：机器人（国家标准）",
+      "source_doc": "协作机器人技术规范"
+    },
+    {
+      "name": "ISO 10218-2:2011",
+      "type": "standard",
+      "summary": "工业环境用机器人 安全要求 第2部分：机器人系统与集成（国际标准）",
+      "source_doc": "协作机器人技术规范"
+    },
+    {
+      "name": "GB 11291.2—2013",
+      "type": "standard",
+      "summary": "工业环境用机器人 安全要求 第2部分：机器人系统与集成（国家标准）",
+      "source_doc": "协作机器人技术规范"
+    },
+    {
+      "name": "mi04_ssw_rout.pc",
+      "type": "file_format",
+      "summary": "机器人路由配置文件，用于B1车身更新",
+      "source_doc": "米包B2&M7更新记录反馈表"
+    },
+    {
+      "name": "ARGDISPEG14.DT",
+      "type": "file_format",
+      "summary": "机器人显示配置文件，用于MI14 Rivet ID扩展",
+      "source_doc": "米包B2&M7更新记录反馈表"
+    },
+    {
+      "name": "dcsbook.xvr",
+      "type": "file_format",
+      "summary": "DCS速度位置检查配置文件，用于后续新机器人",
+      "source_doc": "米包B2&M7更新记录反馈表"
+    },
+    {
+      "name": "dspbook.xvr",
+      "type": "file_format",
+      "summary": "涂胶电压标定配置文件，用于后续新机器人",
+      "source_doc": "米包B2&M7更新记录反馈表"
+    },
+    {
+      "name": "KUKA",
+      "type": "device",
+      "summary": "机器人品牌，用于仿真后台数据存储分类",
+      "source_doc": "车身Tecnomatix仿真后台数据存放规范"
+    },
+    {
+      "name": "ABB",
+      "type": "device",
+      "summary": "机器人品牌，用于仿真后台数据存储分类",
+      "source_doc": "车身Tecnomatix仿真后台数据存放规范"
+    },
+    {
+      "name": "FANUC",
+      "type": "device",
+      "summary": "机器人品牌，用于仿真后台数据存储分类",
+      "source_doc": "车身Tecnomatix仿真后台数据存放规范"
+    },
+    {
+      "name": "Self坐标",
+      "type": "standard",
+      "summary": "设备或工装的三维模型原点坐标定义标准",
+      "source_doc": "设备运动机构定义指南"
+    },
+    {
+      "name": "Working frame坐标",
+      "type": "standard",
+      "summary": "三维仿真软件PS的空间原点坐标定义标准",
+      "source_doc": "设备运动机构定义指南"
+    },
+    {
+      "name": "Toolframe",
+      "type": "standard",
+      "summary": "机器人六轴工具安装面的中心坐标定义标准",
+      "source_doc": "设备运动机构定义指南"
+    },
+    {
+      "name": "TCP坐标",
+      "type": "standard",
+      "summary": "机器人工具中心点（tool center position）坐标定义标准",
+      "source_doc": "设备运动机构定义指南"
+    },
+    {
+      "name": "Tecnomatix (PD/PS)",
+      "type": "software",
+      "summary": "西门子工业软件品牌，包含Process Designer和Process Simulate两个产品",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "name": "Process Designer",
+      "type": "software",
+      "summary": "Tecnomatix套件中的工艺规划软件，简称PD",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "name": "Process Simulate",
+      "type": "software",
+      "summary": "Tecnomatix套件中的仿真软件，简称PS",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "name": "Plant Simulation",
+      "type": "software",
+      "summary": "Tecnomatix套件中的物流仿真工具，用于生产线效率分析",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "name": ".step",
+      "type": "file_format",
+      "summary": "三维模型文件格式，用于工装和设备",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".CATPart",
+      "type": "file_format",
+      "summary": "三维模型文件格式，用于工装和设备",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".3dxml",
+      "type": "file_format",
+      "summary": "模型数据冻结前的过程数据格式",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".cgr",
+      "type": "file_format",
+      "summary": "模型数据冻结前的过程数据格式，用于设备",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".psz",
+      "type": "file_format",
+      "summary": "仿真数据冻结前的过程数据格式",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".pgz",
+      "type": "file_format",
+      "summary": "仿真数据冻结前的过程数据格式",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".pod",
+      "type": "file_format",
+      "summary": "现场设备扫描的点云数据格式，可直接导入PS软件查看",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "name": ".XML",
+      "type": "file_format",
+      "summary": "仿真数据框架文件格式，由小米汽车提供",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "name": "RCS模块",
+      "type": "software",
+      "summary": "机器人仿真中需加载的正确有效的模块",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    }
+  ],
+  "claims": [
+    {
+      "title": "数字输入输出映射位数",
+      "content": "前512位数字输入和数字输出映射到上级控制器",
+      "category": "parameter",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "title": "现场总线协议类型",
+      "content": "仅允许采用以太网IP、实时工业以太网(Profinet)和以太网控制自动化技术(EtherCAT)",
+      "category": "threshold",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "title": "干涉区退出路径点精度",
+      "content": "必须使用fine点",
+      "category": "threshold",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "title": "干涉区进入路径点精度",
+      "content": "可以不为fine点",
+      "category": "threshold",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "title": "干涉区请求规则",
+      "content": "PLC让先请求的机器人R01先进入干涉区，后请求的机器人R02需等R01退出后才能进入",
+      "category": "threshold",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "title": "干涉区类型",
+      "content": "多车型需使用绝对干涉区",
+      "category": "threshold",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "title": "程序命名格式",
+      "content": "机器人编号_车型号_工艺顺序号_工艺_工作工位",
+      "category": "format",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "title": "动作程序命名格式",
+      "content": "机器人编号_工具号_工艺_工具号",
+      "category": "format",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "title": "I/O名称格式要求",
+      "content": "必须采用大写字母，尽量简洁明了",
+      "category": "format",
+      "source_doc": "E10001-小米FANUC编程标准V1.1"
+    },
+    {
+      "title": "程序速度值",
+      "content": "500mm/sec, 2000mm/sec",
+      "category": "parameter",
+      "source_doc": "E10015-搬运应用程序说明-V1.0"
+    },
+    {
+      "title": "程序CNT值",
+      "content": "10, 50, 100, 30, 20",
+      "category": "parameter",
+      "source_doc": "E10015-搬运应用程序说明-V1.0"
+    },
+    {
+      "title": "用户坐标系号",
+      "content": "6, 7",
+      "category": "parameter",
+      "source_doc": "E10015-搬运应用程序说明-V1.0"
+    },
+    {
+      "title": "工具坐标系号",
+      "content": "5, 6",
+      "category": "parameter",
+      "source_doc": "E10015-搬运应用程序说明-V1.0"
+    },
+    {
+      "title": "负载质量号",
+      "content": "5, 6",
+      "category": "parameter",
+      "source_doc": "E10015-搬运应用程序说明-V1.0"
+    },
+    {
+      "title": "文档发布日期",
+      "content": "2023/11/15, 2024.8.5, 2025.4.15",
+      "category": "parameter",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "title": "控制方股权比例",
+      "content": "直接或间接地拥有被控制方50%或以上的股权或表决权",
+      "category": "threshold",
+      "source_doc": "E10009-SOR-机器人框架协议招标技术要求-V1.1"
+    },
+    {
+      "title": "董事会成员委派比例",
+      "content": "直接或间接地拥有向被控制方委派董事会或同类管理组织中大部分成员的权力",
+      "category": "threshold",
+      "source_doc": "E10009-SOR-机器人框架协议招标技术要求-V1.1"
+    },
+    {
+      "title": "文档密级",
+      "content": "L3-机密文件",
+      "category": "format",
+      "source_doc": "E10025-机器人管线包技术要求-V1.1"
+    },
+    {
+      "title": "床身长度要求",
+      "content": "一段式最长不小于6米，超过一段式最长床身长度则按中间数长度拼接",
+      "category": "threshold",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "title": "载板适配机器人型号",
+      "content": "需能适配Fanuc机器人R2000和M900常规系列",
+      "category": "parameter",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "title": "总体负载重量限制",
+      "content": "不超过4吨（偏差正负5%）",
+      "category": "threshold",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "title": "重复定位精度",
+      "content": "±0.1mm",
+      "category": "parameter",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "title": "加速度要求",
+      "content": "达到或者接近1.5m/s²",
+      "category": "parameter",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "title": "速度要求",
+      "content": "达到或者接近1.5m/s",
+      "category": "parameter",
+      "source_doc": "E10026-机器人行走轴技术要求-V1.1"
+    },
+    {
+      "title": "硬盘容量要求",
+      "content": "2T（V1.4版本，原为1T）",
+      "category": "parameter",
+      "source_doc": "E10029-机器人视觉引导技术要求-V1.4"
+    },
+    {
+      "title": "视觉系统精度要求",
+      "content": "≤±0.2mm（总装风挡或天幕玻璃视觉引导系统）",
+      "category": "threshold",
+      "source_doc": "E10029-机器人视觉引导技术要求-V1.4"
+    },
+    {
+      "title": "关联方控制定义 - 股权",
+      "content": "直接或间接地拥有被控制方50%或以上的股权或表决权",
+      "category": "parameter",
+      "source_doc": "E10029-机器人视觉引导技术要求-V1.4"
+    },
+    {
+      "title": "关联方控制定义 - 董事会",
+      "content": "直接或间接地拥有向被控制方委派董事会或同类管理组织中大部分成员的权力",
+      "category": "parameter",
+      "source_doc": "E10029-机器人视觉引导技术要求-V1.4"
+    },
+    {
+      "title": "关联方控制定义 - 财务报表",
+      "content": "根据国际会计准则或香港会计准则可以合并被控制方的财务报表",
+      "category": "parameter",
+      "source_doc": "E10029-机器人视觉引导技术要求-V1.4"
+    },
+    {
+      "title": "工艺需求",
+      "content": "≤1mm（总装应用）",
+      "category": "threshold",
+      "source_doc": "E10030-机器人涂胶检测技术要求-V1.3"
+    },
+    {
+      "title": "总装设备精度",
+      "content": "0.1mm",
+      "category": "parameter",
+      "source_doc": "E10030-机器人涂胶检测技术要求-V1.3"
+    },
+    {
+      "title": "最大检测速度",
+      "content": "1000mm/s（V1.3版本，原为500）",
+      "category": "parameter",
+      "source_doc": "E10030-机器人涂胶检测技术要求-V1.3"
+    },
+    {
+      "title": "NC定义",
+      "content": "柔性伺服定位装置；一种柔性的、可编程的伺服定位装置，由精度高、重复性好的伺服变位机组成的装置",
+      "category": "parameter",
+      "source_doc": "E10043-NC柔性定位系统技术规范-V1.0"
+    },
+    {
+      "title": "关联方定义",
+      "content": "控制一方、被一方控制或与一方共同被控制的任何实体，其中控制是指直接或间接地通过具有表决权的股权、合同或其他方式掌控被控制方的管理和决策",
+      "category": "parameter",
+      "source_doc": "E10027-机器人换枪盘技术要求-V1.1"
+    },
+    {
+      "title": "关联方控制定义 - 股权",
+      "content": "直接或间接地拥有被控制方50%或以上的股权或表决权",
+      "category": "parameter",
+      "source_doc": "E10027-机器人换枪盘技术要求-V1.1"
+    },
+    {
+      "title": "关联方控制定义 - 董事会",
+      "content": "直接或间接地拥有向被控制方委派董事会或同类管理组织中大部分成员的权力",
+      "category": "parameter",
+      "source_doc": "E10027-机器人换枪盘技术要求-V1.1"
+    },
+    {
+      "title": "关联方控制定义 - 财务报表",
+      "content": "根据国际会计准则或香港会计准则可以合并被控制方的财务报表",
+      "category": "parameter",
+      "source_doc": "E10027-机器人换枪盘技术要求-V1.1"
+    },
+    {
+      "title": "视觉引导场景CPU型号",
+      "content": "不低于Intel i5-13400或同等算力型号",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "视觉引导场景内存",
+      "content": "不低于16GB",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "视觉引导场景硬盘容量",
+      "content": "不小于1T，要求SSD",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "涂胶检测场景内存",
+      "content": "不低于8GB",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "涂胶检测场景硬盘容量",
+      "content": "不小于2T，要求SSD",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "工控机工作温度",
+      "content": "0°到50°",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "环境相对湿度",
+      "content": "5%～95%",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "前面板防护等级",
+      "content": "不小于IP65",
+      "category": "threshold",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "供电电压允许波动范围",
+      "content": "±5%",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "控制柜防护等级",
+      "content": "不小于IP54",
+      "category": "threshold",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "密码长度",
+      "content": "不低于8位，包含数字+大小写字母",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "日志保存时间",
+      "content": "不少于180天",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "车型程序调用数量",
+      "content": "最多255个",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "重启时间",
+      "content": "≤5分钟",
+      "category": "threshold",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "UPS断电后持续供电时间",
+      "content": "不少于5分钟",
+      "category": "parameter",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "title": "接头接触电阻",
+      "content": "≤0.01Ω",
+      "category": "threshold",
+      "source_doc": "E10043-工业视觉控制柜技术要求-V1.0"
+    },
+    {
+      "name": "传感器内径",
+      "content": "120x120mm或240x240mm",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "TCP-2D/3D校准精度",
+      "content": "0.02mm",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "TCP-5D校准精度",
+      "content": "0.02mm",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "TCP3D-6D校准精度",
+      "content": "0.02mm",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "2D校准时间",
+      "content": "3-5秒完成",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "3D校准时间",
+      "content": "6-10秒完成",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "5D校准时间",
+      "content": "9-15秒完成",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "6D校准时间",
+      "content": "15-30秒完成",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "防护等级",
+      "content": "IP67",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "工作电压",
+      "content": "10-34V DC",
+      "category": "parameter",
+      "source_doc": "E10044-涂胶TCP校准工具技术要求"
+    },
+    {
+      "title": "参考点数据拟合误差",
+      "content": "≤1mm",
+      "category": "threshold",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "title": "划点误差",
+      "content": "≤0.3mm",
+      "category": "threshold",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "title": "安装后基准孔坐标测量值与理论值误差",
+      "content": "≤0.5mm",
+      "category": "threshold",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "title": "靶座安装高度",
+      "content": "2.5～4米",
+      "category": "parameter",
+      "source_doc": "仿真与实物一致性实施要求"
+    },
+    {
+      "title": "激光跟踪仪单站测量半径",
+      "content": "≥20m",
+      "category": "threshold",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "激光跟踪仪精度",
+      "content": "≤20µm+6µm/m",
+      "category": "threshold",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "激光跟踪仪重复精度",
+      "content": "10µm+4µm/m",
+      "category": "threshold",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "激光跟踪仪测距误差",
+      "content": "≤20µm",
+      "category": "threshold",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "机器人BASE偏差阈值",
+      "content": "≤5mm",
+      "category": "threshold",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "TCP验证偏差阈值",
+      "content": "≤2mm",
+      "category": "threshold",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "七轴运动划分段长度",
+      "content": "1-1.5m",
+      "category": "parameter",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "七轴伸展姿态数量（情形2）",
+      "content": "至少7个不同的伸展姿态",
+      "category": "parameter",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "七轴运动划分点数量",
+      "content": "至少15-20个姿态",
+      "category": "parameter",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "参考孔数量（无车身坐标系时）",
+      "content": "4-5个",
+      "category": "parameter",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "验证移动位置数量",
+      "content": "至少三个位置",
+      "category": "parameter",
+      "source_doc": "机器人BASE测量及计算规范"
+    },
+    {
+      "title": "设备开动率（补焊夹具）",
+      "content": "0.999",
+      "category": "parameter",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "title": "设备修复时间（补焊夹具）",
+      "content": "5",
+      "category": "parameter",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "title": "设备开动率（机器人）",
+      "content": "0.999995",
+      "category": "parameter",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "title": "设备开动率（七轴）",
+      "content": "0.9963",
+      "category": "parameter",
+      "source_doc": "小米汽车Plant Simulation仿真计算标准_to 供应商"
+    },
+    {
+      "title": "软件平台版本",
+      "content": "16.1.2",
+      "category": "parameter",
+      "source_doc": "离线编程及虚拟调试技术要求"
+    },
+    {
+      "title": "最大运动速度",
+      "content": "100%或100m",
+      "category": "parameter",
+      "source_doc": "离线编程及虚拟调试技术要求"
+    },
+    {
+      "title": "连接工具轴向运动幅度",
+      "content": "10mm以内",
+      "category": "threshold",
+      "source_doc": "离线编程及虚拟调试技术要求"
+    },
+    {
+      "title": "涂胶电压标定模拟量上限",
+      "content": "2000（原问题），修改后扩大到65535",
+      "category": "parameter",
+      "source_doc": "米包B2&M7更新记录反馈表"
+    },
+    {
+      "title": "MI14 Rivet ID范围",
+      "content": "从999999扩展到9999999",
+      "category": "parameter",
+      "source_doc": "米包B2&M7更新记录反馈表"
+    },
+    {
+      "title": "PD/PS软件版本",
+      "content": "16.1.2",
+      "category": "parameter",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "title": "Plant Simulation软件版本",
+      "content": "16.0",
+      "category": "parameter",
+      "source_doc": "车身线仿真、离线及虚拟调试技术要求总则"
+    },
+    {
+      "title": "模型设计基本单位",
+      "content": "mm（毫米）",
+      "category": "threshold",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "title": "尺寸标注小数位",
+      "content": "2位小数",
+      "category": "format",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "title": "设备模型设计尺寸与实物比例",
+      "content": "1:1",
+      "category": "parameter",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "title": "仿真文件输出格式",
+      "content": ".xml文件+后台数据包，后台数据须清除所有过程及无关数据",
+      "category": "format",
+      "source_doc": "车身设备数模结构要求"
+    },
+    {
+      "title": "点云数据坐标原点",
+      "content": "与仿真布局坐标原点一致",
+      "category": "threshold",
+      "source_doc": "车身设备数模结构要求"
+    }
+  ],
+  "contradictions": [],
+  "stats": {
+    "total_articles": 32,
+    "total_entities": 97,
+    "total_claims": 94,
+    "total_contradictions": 0
+  }
+}
