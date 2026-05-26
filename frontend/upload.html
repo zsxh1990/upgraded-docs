@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上传文档 - 机器人知识库</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f7; color: #1d1d1f; min-height: 100vh; }
+header { background: #fff; border-bottom: 1px solid #e5e5e7; padding: 16px 40px; display: flex; align-items: center; gap: 24px; }
+header h1 { font-size: 18px; font-weight: 600; }
+header nav { display: flex; gap: 16px; }
+header nav a { color: #555; text-decoration: none; font-size: 14px; }
+header nav a:hover { color: #0066cc; }
+.container { max-width: 720px; margin: 40px auto; padding: 0 20px; }
+.dropzone { background: #fff; border: 2px dashed #c7c7cc; border-radius: 16px; padding: 48px 24px; text-align: center; cursor: pointer; transition: border .2s, background .2s; }
+.dropzone:hover, .dropzone.dragover { border-color: #0066cc; background: #f0f5ff; }
+.dropzone .icon { font-size: 48px; margin-bottom: 12px; }
+.dropzone p { font-size: 16px; color: #555; }
+.dropzone .hint { font-size: 13px; color: #999; margin-top: 8px; }
+#file-input { display: none; }
+.file-list { margin-top: 24px; }
+.file-item { background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.file-item .name { flex: 1; font-size: 14px; }
+.file-item .status { font-size: 13px; white-space: nowrap; }
+.status-pending { color: #999; }
+.status-importing { color: #0066cc; }
+.status-ok { color: #34c759; }
+.status-skip { color: #ff9500; }
+.status-conflict { color: #ff3b30; }
+.progress { margin-top: 24px; display: none; }
+.progress-bar { height: 4px; background: #e5e5e7; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: #0066cc; width: 0; transition: width .3s; }
+.progress-text { font-size: 13px; color: #666; margin-top: 6px; text-align: center; }
+.result-summary { margin-top: 24px; background: #fff; border-radius: 12px; padding: 20px; display: none; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.result-summary h3 { font-size: 15px; margin-bottom: 12px; }
+.result-summary .row { display: flex; gap: 24px; font-size: 14px; }
+.result-summary .row span { color: #666; }
+.result-summary .row strong { color: #1d1d1f; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 机器人知识库</h1>
+  <nav>
+    <a href="/">搜索</a>
+    <a href="/conflicts.html">冲突</a>
+    <a href="/upload.html" style="color:#0066cc;font-weight:500;">上传</a>
+  </nav>
+</header>
+<div class="container">
+  <div class="dropzone" id="dropzone">
+    <div class="icon">📄</div>
+    <p>拖拽 Office/PDF 文档到此处</p>
+    <p class="hint">或点击选择文件 · 支持 .docx .xlsx .pptx .pdf .md .txt</p>
+  </div>
+  <input type="file" id="file-input" multiple accept=".docx,.xlsx,.pptx,.pdf,.md,.txt">
+
+  <div class="file-list" id="file-list"></div>
+
+  <div class="progress" id="progress">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-text" id="progress-text">准备中...</div>
+  </div>
+
+  <div class="result-summary" id="result-summary">
+    <h3>导入结果</h3>
+    <div class="row">
+      <span>成功: <strong id="r-ok">0</strong></span>
+      <span>跳过: <strong id="r-skip">0</strong></span>
+      <span>冲突: <strong id="r-conflict">0</strong></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+const fileList = document.getElementById('file-list');
+const progress = document.getElementById('progress');
+const progressFill = document.getElementById('progress-fill');
+const progressText = document.getElementById('progress-text');
+const resultSummary = document.getElementById('result-summary');
+
+dropzone.addEventListener('click', () => fileInput.click());
+
+dropzone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropzone.classList.add('dragover');
+});
+dropzone.addEventListener('dragleave', () => {
+  dropzone.classList.remove('dragover');
+});
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) handleFiles(fileInput.files);
+});
+
+async function handleFiles(files) {
+  fileList.innerHTML = '';
+  resultSummary.style.display = 'none';
+  const allowed = ['.docx','.xlsx','.pptx','.pdf','.md','.txt'];
+  let ok = 0, skip = 0, conflict = 0;
+
+  for (const file of files) {
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowed.includes(ext)) {
+      addFileItem(file.name, '不支持', 'status-skip');
+      skip++;
+      continue;
+    }
+    addFileItem(file.name, '导入中...', 'status-importing');
+    progress.style.display = 'block';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await resp.json();
+      if (data.status === 'ok' || data.status === 'passed') {
+        addFileItem(file.name, '✅ 完成', 'status-ok');
+        ok++;
+      } else if (data.conflicts_found > 0 || data.status === 'conflict_pending') {
+        addFileItem(file.name, `⚠️ ${data.conflicts_found} 个冲突`, 'status-conflict');
+        ok++;
+        conflict += data.conflicts_found || 0;
+      } else {
+        addFileItem(file.name, `⏭️ ${data.reason || '跳过'}`, 'status-skip');
+        skip++;
+      }
+    } catch (err) {
+      addFileItem(file.name, '❌ 导入失败', 'status-skip');
+      skip++;
+    }
+  }
+
+  progress.style.display = 'none';
+  resultSummary.style.display = 'block';
+  document.getElementById('r-ok').textContent = ok;
+  document.getElementById('r-skip').textContent = skip;
+  document.getElementById('r-conflict').textContent = conflict;
+}
+
+function addFileItem(name, status, cls) {
+  const div = document.createElement('div');
+  div.className = 'file-item';
+  div.innerHTML = `<span class="name">${escapeHtml(name)}</span><span class="status ${cls}">${status}</span>`;
+  fileList.appendChild(div);
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

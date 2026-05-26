@@ -5,6 +5,7 @@
 """
 
 import json
+import time
 import sqlite3
 import os
 import sys
@@ -529,6 +530,78 @@ def api_search_structured():
     return jsonify(results)
 
 
+# ── API: 文件上传 ──
+
+UPLOAD_DIR = DATA_DIR / "uploads"
+ALLOWED_EXT = {".md", ".txt", ".docx", ".xlsx", ".pptx", ".pdf"}
+
+
+@app.route("/api/upload", methods=["POST"])
+def api_upload():
+    """上传并导入单个文档。"""
+    if "file" not in request.files:
+        return jsonify({"error": "no file"}), 400
+    f = request.files["file"]
+    if not f.filename:
+        return jsonify({"error": "empty filename"}), 400
+
+    ext = Path(f.filename).suffix.lower()
+    if ext not in ALLOWED_EXT:
+        return jsonify({"status": "skip", "reason": f"不支持格式 {ext}"})
+
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    tmp_path = UPLOAD_DIR / f"_{int(time.time())}_{f.filename}"
+    f.save(str(tmp_path))
+
+    try:
+        sys.path.insert(0, str(BASE / "scripts"))
+        from import_docs import import_file
+        result = import_file(tmp_path, fetch_links=False, skip_semantic=True)
+
+        if result.get("skipped"):
+            return jsonify({"status": "skip", "reason": result.get("reason", "")})
+
+        # 重建索引
+        count = rebuild_search_index()
+
+        return jsonify({
+            "status": "ok" if not result.get("params_count") else "ok",
+            "doc_id": result["id"],
+            "title": result["title"],
+            "params_count": result.get("params_count", 0),
+            "links_count": result.get("links_count", 0),
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "reason": str(e)}), 500
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
+
+
+# ── 全局错误处理 ──
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"error": "not found"}), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return jsonify({"error": "服务器内部错误，请查看服务端日志"}), 500
+
+
+@app.context_processor
+def inject_globals():
+    """向模板注入冲突计数等全局变量。"""
+    try:
+        from conflict_detector import get_stats
+        s = get_stats()
+        conflict_count = s.get("pending", 0)
+    except Exception:
+        conflict_count = 0
+    return dict(pending_conflicts=conflict_count)
+
+
 # ── 启动 ──
 
 if __name__ == "__main__":
@@ -537,4 +610,4 @@ if __name__ == "__main__":
     print(f"🌐 启动: http://localhost:5000")
     print(f"   搜索: http://localhost:5000/?q=零点标定")
     print(f"   冲突: http://localhost:5000/conflicts.html")
-    app.run(host="127.0.0.1", port=8080, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=False)
