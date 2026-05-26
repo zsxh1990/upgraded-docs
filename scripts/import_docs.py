@@ -34,45 +34,44 @@ SUPPORTED = {".md", ".txt", ".docx", ".xlsx", ".pptx"}
 
 def _init_structured_tables():
     """确保结构化数据表存在（参数表 + 配置表 + 超链接表）。"""
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS parameters (
-            id         TEXT PRIMARY KEY,
-            doc_id     TEXT REFERENCES documents(id),
-            param_name TEXT NOT NULL,
-            value      TEXT,
-            unit       TEXT DEFAULT '',
-            sheet_name TEXT DEFAULT '',
-            row_idx    INTEGER DEFAULT 0,
-            normalized TEXT DEFAULT '',
-            source     TEXT DEFAULT 'excel',
-            created_at TEXT DEFAULT (datetime('now'))
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS hyperlinks (
-            id           TEXT PRIMARY KEY,
-            doc_id       TEXT REFERENCES documents(id),
-            sheet_name   TEXT DEFAULT '',
-            row_idx      INTEGER DEFAULT 0,
-            col_idx      INTEGER DEFAULT 0,
-            cell_text    TEXT DEFAULT '',
-            url          TEXT DEFAULT '',
-            link_type    TEXT DEFAULT 'unknown',
-            target_text  TEXT DEFAULT '',
-            fetched      INTEGER DEFAULT 0,
-            fetch_error  TEXT DEFAULT '',
-            created_at   TEXT DEFAULT (datetime('now'))
-        )
-    """)
-    conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_param_name ON parameters(normalized)
-    """)
-    conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_param_doc ON parameters(doc_id)
-    """)
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(str(DB_PATH)) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS parameters (
+                id         TEXT PRIMARY KEY,
+                doc_id     TEXT REFERENCES documents(id),
+                param_name TEXT NOT NULL,
+                value      TEXT,
+                unit       TEXT DEFAULT '',
+                sheet_name TEXT DEFAULT '',
+                row_idx    INTEGER DEFAULT 0,
+                normalized TEXT DEFAULT '',
+                source     TEXT DEFAULT 'excel',
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS hyperlinks (
+                id           TEXT PRIMARY KEY,
+                doc_id       TEXT REFERENCES documents(id),
+                sheet_name   TEXT DEFAULT '',
+                row_idx      INTEGER DEFAULT 0,
+                col_idx      INTEGER DEFAULT 0,
+                cell_text    TEXT DEFAULT '',
+                url          TEXT DEFAULT '',
+                link_type    TEXT DEFAULT 'unknown',
+                target_text  TEXT DEFAULT '',
+                fetched      INTEGER DEFAULT 0,
+                fetch_error  TEXT DEFAULT '',
+                created_at   TEXT DEFAULT (datetime('now'))
+            )
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_param_name ON parameters(normalized)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_param_doc ON parameters(doc_id)
+        """)
+        conn.commit()
 
 
 # ── Excel 结构感知分类 ────────────────────────────────────────────
@@ -334,8 +333,8 @@ def _fetch_feishu_link(url: str, link_type: str) -> str:
                     if resp.status_code == 200:
                         data = resp.json()
                         return data.get("data", {}).get("content", "")[:5000]
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"  ⚠️  语义检测跳过: {e}")
     return ""
 
 
@@ -346,51 +345,52 @@ def _detect_param_conflicts(doc_id: str, params: list[dict]) -> list[dict]:
     if not params:
         return []
 
-    conn = sqlite3.connect(str(DB_PATH))
     conflicts = []
 
-    for p in params:
-        pname = p.get("normalized") or p.get("param_name", "")
-        pval = p.get("value", "")
-        punit = p.get("unit", "")
-        if not pname or not pval:
-            continue
+    with sqlite3.connect(str(DB_PATH)) as conn:
+        conn.row_factory = sqlite3.Row
 
-        rows = conn.execute("""
-            SELECT p.value, p.unit, p.doc_id, d.title
-            FROM parameters p
-            JOIN documents d ON d.id = p.doc_id
-            WHERE p.normalized = ? AND p.doc_id != ?
-            ORDER BY p.created_at DESC
-            LIMIT 10
-        """, (pname, doc_id)).fetchall()
-
-        for existing_val, existing_unit, existing_doc_id, existing_title in rows:
-            if existing_val == pval:
-                continue
-            try:
-                new_num = float(pval.replace(",", "").replace(" ", ""))
-                old_num = float(existing_val.replace(",", "").replace(" ", ""))
-                if new_num == old_num:
-                    continue
-                diff_ratio = abs(new_num - old_num) / max(abs(old_num), abs(new_num), 0.001)
-                if diff_ratio < 0.05:
-                    continue
-            except ValueError:
-                pass
-
-            if existing_unit and punit and existing_unit != punit:
+        for p in params:
+            pname = p.get("normalized") or p.get("param_name", "")
+            pval = p.get("value", "")
+            punit = p.get("unit", "")
+            if not pname or not pval:
                 continue
 
-            conflicts.append({
-                "param": pname,
-                "existing_value": f"{existing_val}{existing_unit}",
-                "new_value": f"{pval}{punit}",
-                "existing_doc": existing_title,
-                "existing_id": existing_doc_id,
-            })
+            rows = conn.execute("""
+                SELECT p.value, p.unit, p.doc_id, d.title
+                FROM parameters p
+                JOIN documents d ON d.id = p.doc_id
+                WHERE p.normalized = ? AND p.doc_id != ?
+                ORDER BY p.created_at DESC
+                LIMIT 10
+            """, (pname, doc_id)).fetchall()
 
-    conn.close()
+            for existing_val, existing_unit, existing_doc_id, existing_title in rows:
+                if existing_val == pval:
+                    continue
+                try:
+                    new_num = float(pval.replace(",", "").replace(" ", ""))
+                    old_num = float(existing_val.replace(",", "").replace(" ", ""))
+                    if new_num == old_num:
+                        continue
+                    diff_ratio = abs(new_num - old_num) / max(abs(old_num), abs(new_num), 0.001)
+                    if diff_ratio < 0.05:
+                        continue
+                except ValueError:
+                    pass
+
+                if existing_unit and punit and existing_unit != punit:
+                    continue
+
+                conflicts.append({
+                    "param": pname,
+                    "existing_value": f"{existing_val}{existing_unit}",
+                    "new_value": f"{pval}{punit}",
+                    "existing_doc": existing_title,
+                    "existing_id": existing_doc_id,
+                })
+
     return conflicts
 
 
@@ -440,13 +440,6 @@ def parse_excel(path: Path) -> dict:
     """Excel 结构感知解析，返回结构化数据。"""
     from openpyxl import load_workbook
 
-    wb_ro = load_workbook(str(path), read_only=True, data_only=True)
-    sheet_info = {}
-    for sheet_name in wb_ro.sheetnames:
-        ws = wb_ro[sheet_name]
-        sheet_info[sheet_name] = classify_sheet(ws)
-    wb_ro.close()
-
     wb = load_workbook(str(path), data_only=True)
 
     all_texts = []
@@ -456,7 +449,9 @@ def parse_excel(path: Path) -> dict:
 
     for sheet_name in wb.sheetnames:
         ws = wb[sheet_name]
-        sheet_type = sheet_info.get(sheet_name, "mixed")
+
+        # 先分类，再按类型提取（一次性，不重新打开文件）
+        sheet_type = classify_sheet(ws)
 
         if sheet_type == "tabular":
             records = extract_tabular(ws, sheet_name)
@@ -533,7 +528,7 @@ def parse_excel(path: Path) -> dict:
 
 # ── extract_text 增强 ───────────────────────────────────────────────
 
-def extract_text(path: Path, fetch_links: bool = True) -> dict:
+def extract_text(path: Path, fetch_links: bool = False) -> dict:
     """提取文档全文 + 结构化数据。"""
     ext = path.suffix.lower()
     result = {"text": "", "params": [], "links": [], "summary": {}}
@@ -607,6 +602,9 @@ def extract_text(path: Path, fetch_links: bool = True) -> dict:
 # ── 参数元数据持久化 ────────────────────────────────────────────────
 
 def _store_parameters(conn, doc_id: str, params: list[dict]):
+    if not params:
+        return
+    conn.execute("BEGIN")
     for i, p in enumerate(params):
         param_id = hashlib.md5(f"{doc_id}_{p['param_name']}_{i}".encode()).hexdigest()[:16]
         conn.execute("""
@@ -620,9 +618,13 @@ def _store_parameters(conn, doc_id: str, params: list[dict]):
             p.get("normalized", _normalize_param_name(p["param_name"])),
             "excel",
         ))
+    conn.execute("COMMIT")
 
 
 def _store_hyperlinks(conn, doc_id: str, links: list[dict]):
+    if not links:
+        return
+    conn.execute("BEGIN")
     for i, link in enumerate(links):
         lid = hashlib.md5(f"{doc_id}_link_{i}".encode()).hexdigest()[:16]
         conn.execute("""
@@ -639,6 +641,7 @@ def _store_hyperlinks(conn, doc_id: str, links: list[dict]):
             1 if link.get("fetched") else 0,
             "",
         ))
+    conn.execute("COMMIT")
 
 
 # ── 标题提取 ───────────────────────────────────────────────────────
@@ -681,7 +684,7 @@ def _auto_create_conflict(new_title: str, conflict: dict):
 # ── 导入单文件 ─────────────────────────────────────────────────────
 
 def import_file(path: Path, category: str = "",
-                fetch_links: bool = True,
+                fetch_links: bool = False,
                 skip_semantic: bool = False) -> dict:
     """导入单个文件。
 
@@ -699,20 +702,19 @@ def import_file(path: Path, category: str = "",
     title = extract_title(text, path.name)
     doc_id = hashlib.md5(str(path.resolve()).encode()).hexdigest()[:16]
 
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("""
-        INSERT OR REPLACE INTO documents
-            (id, title, content, category, filename)
-        VALUES (?, ?, ?, ?, ?)
-    """, (doc_id, title, text, category, path.name))
+    with sqlite3.connect(str(DB_PATH)) as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO documents
+                (id, title, content, category, filename)
+            VALUES (?, ?, ?, ?, ?)
+        """, (doc_id, title, text, category, path.name))
 
-    if parsed["params"]:
-        _store_parameters(conn, doc_id, parsed["params"])
-    if parsed["links"]:
-        _store_hyperlinks(conn, doc_id, parsed["links"])
+        if parsed["params"]:
+            _store_parameters(conn, doc_id, parsed["params"])
+        if parsed["links"]:
+            _store_hyperlinks(conn, doc_id, parsed["links"])
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
     # 规则层冲突检测
     if parsed["params"]:
@@ -735,8 +737,8 @@ def import_file(path: Path, category: str = "",
             for c in conflicts:
                 cid = _auto_create_conflict(title, c)
                 print(f"  ⚠️  语义冲突 → {cid}")
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"  ⚠️  语义检测跳过: {e}")
 
     return {
         "id": doc_id,
@@ -751,7 +753,7 @@ def import_file(path: Path, category: str = "",
 # ── 导入目录 ───────────────────────────────────────────────────────
 
 def import_dir(dir_path: Path, category: str = "",
-               fetch_links: bool = True,
+               fetch_links: bool = False,
                skip_semantic: bool = False):
     """递归导入目录。"""
     files = sorted(dir_path.rglob("*"))
@@ -790,8 +792,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="文档导入 V2 — Excel 结构感知 + 超链接递归")
     parser.add_argument("path", help="文件或目录路径")
     parser.add_argument("--category", default="", help="分类标签")
-    parser.add_argument("--no-fetch-links", action="store_true",
-                        help="跳过超链接递归下载")
+    parser.add_argument("--fetch-links", action="store_true",
+                        help="启用超链接递归下载（默认关闭）")
     parser.add_argument("--no-semantic", action="store_true",
                         help="跳过语义冲突检测（仅规则层）")
     args = parser.parse_args()
@@ -805,7 +807,7 @@ if __name__ == "__main__":
 
     if p.is_file():
         result = import_file(p, category=args.category,
-                             fetch_links=not args.no_fetch_links,
+                             fetch_links=args.fetch_links,
                              skip_semantic=args.no_semantic)
         status = "OK" if not result.get("skipped") else result.get("reason", "SKIP")
         params_info = f", {result['params_count']}参数" if result.get("params_count") else ""
@@ -813,7 +815,7 @@ if __name__ == "__main__":
         print(f"\n  导入: {result.get('title', p.name)} ({status}{params_info}{links_info})")
     else:
         import_dir(p, category=args.category,
-                   fetch_links=not args.no_fetch_links,
+                   fetch_links=args.fetch_links,
                    skip_semantic=args.no_semantic)
 
     if not args.no_semantic:

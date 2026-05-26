@@ -12,6 +12,7 @@ V2 新增:
 
 import re
 import json
+import os
 import sqlite3
 import numpy as np
 from pathlib import Path
@@ -93,11 +94,15 @@ def build_index(docs: list[dict]):
 
     texts = [f"{d['title']} {d['content'][:500]}" for d in docs]
 
-    if _USE_LM_STUDIO:
-        _EMBEDDINGS = _embed_with_lm_studio(texts)
-    else:
-        embeddings = list(model.embed(texts))
-        _EMBEDDINGS = np.array(embeddings)
+    try:
+        if _USE_LM_STUDIO:
+            _EMBEDDINGS = _embed_with_lm_studio(texts)
+        else:
+            embeddings = list(model.embed(texts))
+            _EMBEDDINGS = np.array(embeddings)
+    except Exception as e:
+        print(f"  ⚠️  embedding 生成失败: {e}")
+        _EMBEDDINGS = np.array([])
 
     print(f"  语义索引构建完成: {len(docs)} 篇, 维度 {_EMBEDDINGS.shape[1]}")
 
