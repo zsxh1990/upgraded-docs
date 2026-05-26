@@ -403,6 +403,132 @@ def api_document_related(doc_id):
     return jsonify(related)
 
 
+# ── API: 结构化数据（V2 新增） ──
+
+@app.route("/api/parameters")
+def api_parameters():
+    """查询参数表。"""
+    param = request.args.get("q", "")
+    doc_id = request.args.get("doc_id", "")
+    from search_engine import query_parameters
+    params = query_parameters(param_name=param, doc_id=doc_id)
+    return jsonify({
+        "total": len(params),
+        "parameters": [{
+            "id": p["id"],
+            "param": p["param_name"],
+            "value": p["value"],
+            "unit": p["unit"],
+            "doc": p.get("doc_title", ""),
+            "doc_id": p["doc_id"],
+            "sheet": p.get("sheet_name", ""),
+            "normalized": p.get("normalized", ""),
+        } for p in params],
+    })
+
+
+@app.route("/api/parameters/<doc_id>")
+def api_document_parameters(doc_id):
+    """获取文档的所有参数。"""
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT param_name, value, unit, sheet_name FROM parameters WHERE doc_id=? ORDER BY sheet_name, row_idx",
+        (doc_id,)
+    ).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/hyperlinks")
+def api_hyperlinks():
+    """查询超链接表。"""
+    doc_id = request.args.get("doc_id", "")
+    status = request.args.get("status", "")
+    conn = get_db()
+    if doc_id:
+        rows = conn.execute(
+            "SELECT h.*, d.title as doc_title FROM hyperlinks h JOIN documents d ON d.id=h.doc_id WHERE h.doc_id=?",
+            (doc_id,)
+        ).fetchall()
+    elif status == "pending":
+        rows = conn.execute(
+            "SELECT h.*, d.title as doc_title FROM hyperlinks h JOIN documents d ON d.id=h.doc_id WHERE h.fetched=0 ORDER BY h.created_at"
+        ).fetchall()
+    elif status == "failed":
+        rows = conn.execute(
+            "SELECT h.*, d.title as doc_title FROM hyperlinks h JOIN documents d ON d.id=h.doc_id WHERE h.fetched=0 AND h.fetch_error!=''"
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT h.*, d.title as doc_title FROM hyperlinks h JOIN documents d ON d.id=h.doc_id ORDER BY h.created_at DESC LIMIT 50"
+        ).fetchall()
+    conn.close()
+
+    links = [dict(r) for r in rows]
+    total = len(links)
+    fetched = sum(1 for l in links if l.get("fetched"))
+    return jsonify({
+        "total": total,
+        "fetched": fetched,
+        "pending": total - fetched,
+        "links": links,
+    })
+
+
+@app.route("/api/conflicts/full-scan", methods=["POST"])
+def api_conflicts_full_scan():
+    """全库参数冲突扫描。"""
+    from search_engine import full_rule_conflict_scan
+    conflicts = full_rule_conflict_scan()
+
+    from conflict_detector import create_conflict
+    created = 0
+    for c in conflicts:
+        title = f"参数冲突: {c['param']}"
+        existing = create_conflict({
+            "title": title,
+            "status": "待解决",
+            "proposer": "系统（全库扫描）",
+            "description": (
+                f"参数「{c['param']}」在以下文档中存在数值差异：\n"
+                f"  {c['primary_doc']}: {c['primary_value']}\n"
+                f"  {c['conflict_doc']}: {c['conflict_value']}"
+            ),
+            "related_docs": [c["primary_doc"], c["conflict_doc"]],
+        })
+        created += 1
+
+    return jsonify({
+        "scanned": True,
+        "conflicts_found": len(conflicts),
+        "yaml_created": created,
+    })
+
+
+@app.route("/api/hyperlinks/fetch-pending", methods=["POST"])
+def api_fetch_pending_links():
+    """批量拉取未处理的超链接。"""
+    max_links = int(request.args.get("max", 20))
+    try:
+        sys.path.insert(0, str(BASE / "scripts"))
+        import hyperlink_fetcher
+        results = hyperlink_fetcher.fetch_pending_links(max_links=max_links)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify(results)
+
+
+@app.route("/api/search/structured")
+def api_search_structured():
+    """混合检索：文档+参数+超链接。"""
+    q = request.args.get("q", "").strip()
+    if not q:
+        return jsonify({"documents": [], "parameters": [], "links": []})
+    from search_engine import search_structured
+    results = search_structured(q)
+    return jsonify(results)
+
+
 # ── 启动 ──
 
 if __name__ == "__main__":

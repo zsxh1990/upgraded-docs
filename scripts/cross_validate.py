@@ -98,7 +98,71 @@ def extract_equipment_type(title: str, content: str) -> str:
     return '通用'
 
 
-def main():
+def run_param_conflicts(path=None) -> list[dict]:
+    """作为模块被 import_docs 调用：从 SQLite parameters 表扫描冲突。
+
+    V2 新增: 替代依赖 JSON 图谱文件的旧路径。
+    直接从 SQLite 的 parameters 表读取，无需 LLM 预处理。
+
+    返回: [{"param":..., "doc1":..., "value1":..., "doc2":..., "value2":..., "conflict_type":...}, ...]
+    """
+    import sqlite3 as _sqlite3
+    from collections import defaultdict as _dd
+
+    db_path = BASE / "data" / "robot_knowledge.db"
+    if not db_path.exists():
+        return []
+
+    conn = _sqlite3.connect(str(db_path))
+    conn.row_factory = _sqlite3.Row
+
+    rows = conn.execute("""
+        SELECT p.param_name, p.value, p.unit, p.normalized, p.doc_id, d.title as doc_title
+        FROM parameters p
+        JOIN documents d ON d.id = p.doc_id
+        WHERE p.value != '' AND p.normalized != ''
+        ORDER BY p.normalized, p.doc_id
+    """).fetchall()
+    conn.close()
+
+    # 按归一化参数名分组
+    groups = _dd(list)
+    for r in rows:
+        groups[r["normalized"]].append(dict(r))
+
+    # 检测每组内的冲突
+    conflicts = []
+    for norm_name, entries in groups.items():
+        if len(entries) < 2:
+            continue
+        # 求众数值作为"标准"
+        from collections import Counter
+        val_counter = Counter(e["value"] for e in entries)
+        standard_val = val_counter.most_common(1)[0][0]
+
+        for e in entries:
+            if e["value"] != standard_val:
+                # 找标准值对应的文档
+                std_docs = [x for x in entries if x["value"] == standard_val]
+                for sd in std_docs:
+                    conflicts.append({
+                        "param": e["param_name"],
+                        "normalized": norm_name,
+                        "doc1": sd["doc_title"],
+                        "value1": f"{sd['value']}{sd['unit']}",
+                        "doc2": e["doc_title"],
+                        "value2": f"{e['value']}{e['unit']}",
+                        "conflict_type": "param_mismatch",
+                        "detail": f"参数「{e['param_name']}」取值不一致: "
+                                  f"{sd['value']}{sd['unit']} vs {e['value']}{e['unit']}",
+                    })
+                break  # 每参数只输出一条不一致记录
+
+    return conflicts
+
+
+def main_old():
+    """原有 main 函数，保留兼容。"""
     with open(GRAPH_PATH, "r", encoding="utf-8") as f:
         graph = json.load(f)
 
@@ -283,6 +347,11 @@ def deduplicate_conflicts(conflicts: list[dict]) -> list[dict]:
             unique.append(c)
 
     return unique
+
+
+def main():
+    """入口函数（兼容 V1 接口），调用 main_old。"""
+    main_old()
 
 
 if __name__ == "__main__":

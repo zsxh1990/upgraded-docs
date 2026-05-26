@@ -1,5 +1,7 @@
-# 机器人知识库 — 轻量本地知识库系统
-# 零 Docker，纯内网，语义搜索
+# 机器人知识库 V2 — 轻量本地知识库系统
+# 零 Docker，纯内网，语义搜索 + 结构化参数
+#
+# 安装: pip install -r requirements.txt
 
 flask>=3.0
 numpy>=1.24
@@ -9,3 +11,8 @@ markdown>=3.4
 python-docx>=1.0
 openpyxl>=3.1
 pymupdf4llm>=0.1
+requests>=2.28
+
+# 可选: 飞书 OpenAPI (超链接递归)
+# httpx  (如果使用 LM Studio embedding)
+# fastembed 会自动安装 ONNX 运行时
