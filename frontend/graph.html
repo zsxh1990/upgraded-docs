@@ -88,6 +88,44 @@ svg { width: 100%; height: 100%; }
 .article-card h4 { font-size: 14px; color: #58a6ff; margin-bottom: 4px; }
 .article-card p { font-size: 12px; color: #8b949e; margin: 0; }
 
+/* Breadcrumb */
+.breadcrumb { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; align-items: center; gap: 6px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 6px 14px; font-size: 13px; display: none; }
+.breadcrumb span { color: #8b949e; cursor: pointer; }
+.breadcrumb span:hover { color: #58a6ff; }
+.breadcrumb span.active { color: #e6edf3; cursor: default; }
+.breadcrumb .sep { color: #30363d; }
+
+/* Filter panel */
+.filter-panel { position: absolute; top: 60px; left: 16px; z-index: 10; background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 240px; max-height: calc(100vh - 80px); overflow-y: auto; }
+.filter-header { padding: 10px 14px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+.filter-header h4 { font-size: 13px; color: #e6edf3; }
+.filter-section { padding: 8px 14px; border-bottom: 1px solid #21262d; }
+.filter-section:last-child { border-bottom: none; }
+.filter-section h5 { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.filter-check { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; font-size: 12px; }
+.filter-check input { accent-color: #58a6ff; }
+.filter-check .count { color: #6e7681; font-size: 11px; margin-left: auto; }
+.filter-btn { display: block; width: 100%; padding: 6px; border: 1px solid #30363d; border-radius: 4px; background: #21262d; color: #c9d1d9; font-size: 12px; cursor: pointer; margin-top: 4px; text-align: center; }
+.filter-btn:hover { background: #30363d; }
+.filter-btn.active { background: #1f6feb33; border-color: #58a6ff; color: #58a6ff; }
+
+/* Physics controls */
+.physics-panel { position: absolute; bottom: 16px; right: 16px; z-index: 10; background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 200px; display: none; }
+.physics-header { padding: 8px 12px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+.physics-header h4 { font-size: 12px; color: #e6edf3; }
+.physics-body { padding: 10px 12px; }
+.physics-slider { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.physics-slider label { font-size: 11px; color: #8b949e; width: 50px; flex-shrink: 0; }
+.physics-slider input[type=range] { flex: 1; accent-color: #58a6ff; height: 4px; }
+.physics-slider .val { font-size: 11px; color: #c9d1d9; width: 30px; text-align: right; }
+
+/* Edge hover */
+.edge-hit-area { stroke: transparent; stroke-width: 12; fill: none; cursor: pointer; }
+.edge-tooltip { position: absolute; background: #1c2128; border: 1px solid #30363d; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #c9d1d9; z-index: 100; pointer-events: none; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+
+/* Hub badge */
+.hub-badge { position: absolute; font-size: 9px; background: #f85149; color: #fff; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+
 /* Loading */
 .loading { text-align: center; padding: 24px; color: #8b949e; }
 .loading::after { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: 8px; vertical-align: middle; }
@@ -132,18 +170,83 @@ svg { width: 100%; height: 100%; }
   <div class="search-results" id="searchResults"></div>
 </div>
 
+<!-- 面包屑导航 (局部图谱时显示) -->
+<div class="breadcrumb" id="breadcrumb">
+  <span onclick="showGlobalGraph()">全局图谱</span>
+</div>
+
+<!-- 筛选器面板 -->
+<div class="filter-panel" id="filterPanel" style="display:none">
+  <div class="filter-header">
+    <h4>筛选器</h4>
+    <span style="cursor:pointer;color:#8b949e;font-size:16px" onclick="toggleFilterPanel()">×</span>
+  </div>
+  <div class="filter-section">
+    <h5>节点类型</h5>
+    <div id="typeFilters"></div>
+  </div>
+  <div class="filter-section" id="entityFilterSection" style="display:none">
+    <h5>实体类型</h5>
+    <div id="entityTypeFilters"></div>
+  </div>
+  <div class="filter-section" id="claimFilterSection" style="display:none">
+    <h5>声明分类</h5>
+    <div id="claimCategoryFilters"></div>
+  </div>
+  <div class="filter-section">
+    <button class="filter-btn" id="orphanToggle" onclick="toggleOrphans()">隐藏孤立节点</button>
+    <button class="filter-btn" id="hubToggle" onclick="toggleHubHighlight()" style="margin-top:4px">高亮核心节点</button>
+  </div>
+</div>
+
+<!-- 物理参数控制 -->
+<div class="physics-panel" id="physicsPanel">
+  <div class="physics-header">
+    <h4>布局参数</h4>
+    <span style="cursor:pointer;color:#8b949e;font-size:16px" onclick="togglePhysicsPanel()">×</span>
+  </div>
+  <div class="physics-body">
+    <div class="physics-slider">
+      <label>引力</label>
+      <input type="range" min="50" max="500" value="150" id="chargeSlider" oninput="updatePhysics()">
+      <span class="val" id="chargeVal">150</span>
+    </div>
+    <div class="physics-slider">
+      <label>间距</label>
+      <input type="range" min="30" max="300" value="100" id="distSlider" oninput="updatePhysics()">
+      <span class="val" id="distVal">100</span>
+    </div>
+    <div class="physics-slider">
+      <label>碰撞</label>
+      <input type="range" min="0" max="30" value="6" id="collideSlider" oninput="updatePhysics()">
+      <span class="val" id="collideVal">6</span>
+    </div>
+    <button class="filter-btn" id="lockBtn" onclick="toggleLock()">锁定布局</button>
+    <button class="filter-btn" onclick="restartSimulation()" style="margin-top:4px">重新布局</button>
+  </div>
+</div>
+
+<!-- 边 tooltip -->
+<div class="edge-tooltip" id="edgeTooltip"></div>
+
 <div id="graph-container">
   <svg id="svg"></svg>
 </div>
 
 <div class="tooltip" id="tooltip"></div>
 
-<div class="legend" id="legend"></div>
+<div class="legend" id="legend">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span style="font-size:12px;color:#e6edf3">图例</span>
+    <span style="cursor:pointer;font-size:11px;color:#58a6ff" onclick="toggleFilterPanel()">筛选器</span>
+  </div>
+</div>
 
 <div class="zoom-controls">
   <button onclick="zoomIn()" title="放大">+</button>
   <button onclick="zoomOut()" title="缩小">−</button>
   <button onclick="resetZoom()" title="重置视图">⟳</button>
+  <button onclick="togglePhysicsPanel()" title="布局参数" style="font-size:14px">⚙</button>
 </div>
 
 <div id="panel">
@@ -186,6 +289,28 @@ let hiddenTypes = new Set();
 let documentCache = {};
 let docIdMap = null; // title → real doc id
 
+// 局部图谱状态
+let localMode = false;
+let localRootId = null;
+let localNodeIds = null; // Set of visible node IDs in local mode
+let breadcrumbStack = []; // [{id, name}]
+
+// 筛选状态
+let filterState = {
+  types: new Set(['article', 'topic', 'entity', 'claim']),
+  entityTypes: new Set(),
+  claimCategories: new Set(),
+  hideOrphans: false,
+  highlightHubs: false,
+  hubThreshold: 3,
+};
+
+// 物理参数
+let physicsLocked = false;
+
+// 社区聚类
+let clusterMode = true;
+
 async function ensureDocMap() {
   if (docIdMap) return docIdMap;
   const resp = await fetch('/api/documents');
@@ -195,6 +320,348 @@ async function ensureDocMap() {
   return docIdMap;
 }
 
+// ── 局部图谱 ──
+function getNHopNeighbors(nodeId, hops) {
+  const visited = new Set([nodeId]);
+  let frontier = [nodeId];
+  for (let i = 0; i < hops; i++) {
+    const next = new Set();
+    frontier.forEach(id => {
+      graphData.edges.forEach(e => {
+        const sid = e.source?.id || e.source;
+        const tid = e.target?.id || e.target;
+        if (sid === id && !visited.has(tid)) { next.add(tid); visited.add(tid); }
+        if (tid === id && !visited.has(sid)) { next.add(sid); visited.add(sid); }
+      });
+    });
+    frontier = [...next];
+  }
+  return visited;
+}
+
+function showLocalGraph(nodeId, hops) {
+  hops = hops || 2;
+  localMode = true;
+  localRootId = nodeId;
+  localNodeIds = getNHopNeighbors(nodeId, hops);
+  const node = graphData.nodes.find(n => n.id === nodeId);
+  if (node) breadcrumbStack.push({ id: nodeId, name: node.name });
+  updateBreadcrumb();
+  renderGraph();
+  // Focus on the root node
+  const root = graphData.nodes.find(n => n.id === nodeId);
+  if (root) {
+    setTimeout(() => {
+      const container = document.getElementById('graph-container');
+      const cx = container.clientWidth / 2;
+      const cy = container.clientHeight / 2;
+      svg.transition().duration(500).call(
+        zoomBehavior.transform,
+        d3.zoomIdentity.translate(cx - root.x * 0.9, cy - root.y * 0.9).scale(0.9)
+      );
+    }, 600);
+  }
+}
+
+function showGlobalGraph() {
+  localMode = false;
+  localRootId = null;
+  localNodeIds = null;
+  breadcrumbStack = [];
+  updateBreadcrumb();
+  renderGraph();
+  resetZoom();
+}
+
+function drillIntoNode(nodeId) {
+  if (!localMode) {
+    // First drill: enter local mode from global
+    showLocalGraph(nodeId, 2);
+  } else {
+    // Drill deeper: re-center on this node
+    const node = graphData.nodes.find(n => n.id === nodeId);
+    if (node) breadcrumbStack.push({ id: nodeId, name: node.name });
+    localRootId = nodeId;
+    localNodeIds = getNHopNeighbors(nodeId, 2);
+    updateBreadcrumb();
+    renderGraph();
+    setTimeout(() => {
+      const container = document.getElementById('graph-container');
+      const cx = container.clientWidth / 2;
+      const cy = container.clientHeight / 2;
+      svg.transition().duration(500).call(
+        zoomBehavior.transform,
+        d3.zoomIdentity.translate(cx - node.x * 0.9, cy - node.y * 0.9).scale(0.9)
+      );
+    }, 600);
+  }
+}
+
+function navigateBreadcrumb(index) {
+  if (index === 0) {
+    showGlobalGraph();
+  } else {
+    const entry = breadcrumbStack[index];
+    breadcrumbStack = breadcrumbStack.slice(0, index + 1);
+    localRootId = entry.id;
+    localNodeIds = getNHopNeighbors(entry.id, 2);
+    updateBreadcrumb();
+    renderGraph();
+  }
+}
+
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  if (!localMode || breadcrumbStack.length === 0) {
+    bc.style.display = 'none';
+    return;
+  }
+  bc.style.display = 'flex';
+  let html = '<span onclick="showGlobalGraph()">全局图谱</span>';
+  breadcrumbStack.forEach((entry, i) => {
+    html += '<span class="sep">›</span>';
+    if (i === breadcrumbStack.length - 1) {
+      html += `<span class="active">${entry.name}</span>`;
+    } else {
+      html += `<span onclick="navigateBreadcrumb(${i + 1})">${entry.name}</span>`;
+    }
+  });
+  bc.innerHTML = html;
+}
+
+// ── 筛选器 ──
+function initFilters() {
+  // Node type filters
+  const typeDiv = document.getElementById('typeFilters');
+  const typeCounts = {};
+  graphData.nodes.forEach(n => { typeCounts[n.type] = (typeCounts[n.type] || 0) + 1; });
+  ['article', 'topic', 'entity', 'claim'].forEach(type => {
+    const count = typeCounts[type] || 0;
+    if (count === 0) return;
+    const label = document.createElement('label');
+    label.className = 'filter-check';
+    label.innerHTML = `<input type="checkbox" checked data-type="${type}" onchange="toggleTypeFilter('${type}', this.checked)">
+      <span style="color:${COLORS[type]}">${LABELS[type]}</span>
+      <span class="count">${count}</span>`;
+    typeDiv.appendChild(label);
+  });
+
+  // Entity type filters
+  const entityTypes = new Set();
+  graphData.nodes.forEach(n => {
+    if (n.type === 'entity' && n.entityMeta?.entityType) entityTypes.add(n.entityMeta.entityType);
+  });
+  if (entityTypes.size > 0) {
+    document.getElementById('entityFilterSection').style.display = 'block';
+    const etDiv = document.getElementById('entityTypeFilters');
+    entityTypes.forEach(et => {
+      filterState.entityTypes.add(et);
+      const count = graphData.nodes.filter(n => n.entityMeta?.entityType === et).length;
+      const label = document.createElement('label');
+      label.className = 'filter-check';
+      label.innerHTML = `<input type="checkbox" checked data-etype="${et}" onchange="toggleEntityTypeFilter('${et}', this.checked)">
+        <span>${et}</span>
+        <span class="count">${count}</span>`;
+      etDiv.appendChild(label);
+    });
+  }
+
+  // Claim category filters
+  const claimCats = new Set();
+  graphData.nodes.forEach(n => {
+    if (n.type === 'claim' && n.claimMeta?.category) claimCats.add(n.claimMeta.category);
+  });
+  if (claimCats.size > 0) {
+    document.getElementById('claimFilterSection').style.display = 'block';
+    const ccDiv = document.getElementById('claimCategoryFilters');
+    claimCats.forEach(cc => {
+      filterState.claimCategories.add(cc);
+      const count = graphData.nodes.filter(n => n.claimMeta?.category === cc).length;
+      const label = document.createElement('label');
+      label.className = 'filter-check';
+      label.innerHTML = `<input type="checkbox" checked data-ccat="${cc}" onchange="toggleClaimCategoryFilter('${cc}', this.checked)">
+        <span>${cc}</span>
+        <span class="count">${count}</span>`;
+      ccDiv.appendChild(label);
+    });
+  }
+}
+
+function toggleTypeFilter(type, checked) {
+  if (checked) filterState.types.add(type); else filterState.types.delete(type);
+  applyFilters();
+}
+
+function toggleEntityTypeFilter(et, checked) {
+  if (checked) filterState.entityTypes.add(et); else filterState.entityTypes.delete(et);
+  applyFilters();
+}
+
+function toggleClaimCategoryFilter(cc, checked) {
+  if (checked) filterState.claimCategories.add(cc); else filterState.claimCategories.delete(cc);
+  applyFilters();
+}
+
+function toggleOrphans() {
+  filterState.hideOrphans = !filterState.hideOrphans;
+  document.getElementById('orphanToggle').classList.toggle('active', filterState.hideOrphans);
+  applyFilters();
+}
+
+function toggleHubHighlight() {
+  filterState.highlightHubs = !filterState.highlightHubs;
+  document.getElementById('hubToggle').classList.toggle('active', filterState.highlightHubs);
+  applyFilters();
+}
+
+function toggleFilterPanel() {
+  const panel = document.getElementById('filterPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function isNodeVisible(node) {
+  if (!filterState.types.has(node.type)) return false;
+  if (node.type === 'entity' && node.entityMeta?.entityType && !filterState.entityTypes.has(node.entityMeta.entityType)) return false;
+  if (node.type === 'claim' && node.claimMeta?.category && !filterState.claimCategories.has(node.claimMeta.category)) return false;
+  if (localMode && localNodeIds && !localNodeIds.has(node.id)) return false;
+  return true;
+}
+
+function applyFilters() {
+  // Orphan check
+  const connectedIds = new Set();
+  if (filterState.hideOrphans) {
+    graphData.edges.forEach(e => {
+      const sid = e.source?.id || e.source;
+      const tid = e.target?.id || e.target;
+      connectedIds.add(sid);
+      connectedIds.add(tid);
+    });
+  }
+
+  d3.selectAll('.node').style('display', d => {
+    if (!isNodeVisible(d)) return 'none';
+    if (filterState.hideOrphans && !connectedIds.has(d.id)) return 'none';
+    return null;
+  });
+
+  d3.selectAll('.link').style('display', d => {
+    // After D3 resolves links, source/target are node objects
+    const sNode = d.source;
+    const tNode = d.target;
+    if (!sNode || !tNode) return 'none';
+    if (!filterState.types.has(sNode.type) || !filterState.types.has(tNode.type)) return 'none';
+    return null;
+  });
+
+  // Hub highlight
+  if (filterState.highlightHubs) {
+    const connCounts = {};
+    graphData.edges.forEach(e => {
+      const sid = e.source?.id || e.source;
+      const tid = e.target?.id || e.target;
+      connCounts[sid] = (connCounts[sid] || 0) + 1;
+      connCounts[tid] = (connCounts[tid] || 0) + 1;
+    });
+    d3.selectAll('.node').each(function(d) {
+      const count = connCounts[d.id] || 0;
+      const isHub = count >= filterState.hubThreshold;
+      d3.select(this).select('circle,rect')
+        .attr('stroke-width', isHub ? 3 : 2)
+        .attr('stroke', isHub ? '#f85149' : (d.type === 'article' ? '#e6edf3' : 'none'));
+    });
+  } else {
+    d3.selectAll('.node').each(function(d) {
+      d3.select(this).select('circle,rect')
+        .attr('stroke-width', d.type === 'article' ? 2 : (d.type === 'topic' ? 2 : 0))
+        .attr('stroke', d.type === 'article' ? '#e6edf3' : (d.type === 'topic' ? COLORS[d.type] : 'none'));
+    });
+  }
+}
+
+// ── 社区聚类力 ──
+function getCategory(node) {
+  if (node.type === 'topic') return 'topic:' + node.name;
+  if (node.type === 'article') return 'cat:' + (node.knowledgeMeta?.category || '其他');
+  if (node.type === 'entity') return 'et:' + (node.entityMeta?.entityType || 'other');
+  if (node.type === 'claim') return 'cc:' + (node.claimMeta?.category || 'other');
+  return 'other';
+}
+
+function forceCluster(nodes) {
+  const clusterCenters = {};
+  const categories = [...new Set(nodes.map(n => getCategory(n)))];
+  const radius = 250;
+  categories.forEach((cat, i) => {
+    const angle = (2 * Math.PI * i) / categories.length;
+    clusterCenters[cat] = { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+  });
+  return alpha => {
+    nodes.forEach(d => {
+      const cat = getCategory(d);
+      const center = clusterCenters[cat];
+      if (center) {
+        d.vx += (center.x - d.x) * alpha * 0.08;
+        d.vy += (center.y - d.y) * alpha * 0.08;
+      }
+    });
+  };
+}
+
+// ── 物理参数 ──
+function updatePhysics() {
+  const charge = parseInt(document.getElementById('chargeSlider').value);
+  const dist = parseInt(document.getElementById('distSlider').value);
+  const collide = parseInt(document.getElementById('collideSlider').value);
+  document.getElementById('chargeVal').textContent = charge;
+  document.getElementById('distVal').textContent = dist;
+  document.getElementById('collideVal').textContent = collide;
+  if (!simulation) return;
+  simulation.force('charge').strength(-charge);
+  simulation.force('link').distance(dist);
+  simulation.force('collision').radius(d => (SIZES[d.type] || 8) + collide);
+  simulation.alpha(0.3).restart();
+}
+
+function toggleLock() {
+  physicsLocked = !physicsLocked;
+  document.getElementById('lockBtn').classList.toggle('active', physicsLocked);
+  if (physicsLocked) {
+    graphData.nodes.forEach(n => { n.fx = n.x; n.fy = n.y; });
+  } else {
+    graphData.nodes.forEach(n => { n.fx = null; n.fy = null; });
+  }
+}
+
+function restartSimulation() {
+  graphData.nodes.forEach(n => { n.fx = null; n.fy = null; });
+  physicsLocked = false;
+  document.getElementById('lockBtn').classList.remove('active');
+  if (simulation) simulation.alpha(1).restart();
+}
+
+function togglePhysicsPanel() {
+  const panel = document.getElementById('physicsPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── 边悬浮 ──
+function showEdgeTooltip(event, d) {
+  const tip = document.getElementById('edgeTooltip');
+  const label = EDGE_LABELS[d.type] || d.type;
+  const color = EDGE_COLORS[d.type] || '#8b949e';
+  let html = `<span style="color:${color};font-weight:600">${label}</span>`;
+  if (d.description) html += `<div style="margin-top:4px;color:#8b949e;font-size:11px">${d.description.slice(0, 100)}</div>`;
+  tip.innerHTML = html;
+  tip.style.display = 'block';
+  tip.style.left = (event.pageX + 12) + 'px';
+  tip.style.top = (event.pageY - 10) + 'px';
+}
+
+function hideEdgeTooltip() {
+  document.getElementById('edgeTooltip').style.display = 'none';
+}
+
 // ── 加载 ──
 async function loadGraph() {
   const resp = await fetch('/api/graph');
@@ -202,6 +669,7 @@ async function loadGraph() {
   deriveImplicitEdges();
   renderStats();
   renderLegend();
+  initFilters();
   renderGraph();
 }
 
@@ -341,24 +809,28 @@ function renderStats() {
 function renderLegend() {
   const legend = document.getElementById('legend');
   const types = ['article', 'topic', 'entity', 'claim'];
-  legend.innerHTML = types.map(t => {
+  // Keep the header from HTML, add legend items after it
+  let html = legend.innerHTML;
+  html += types.map(t => {
     const count = graphData.nodes.filter(n => n.type === t).length;
-    return `<div class="legend-item" data-type="${t}" onclick="toggleType('${t}')">
+    return `<div class="legend-item" data-type="${t}" onclick="toggleLegendType('${t}')">
       <div class="legend-dot" style="background:${COLORS[t]}"></div> ${LABELS[t]} (${count})
     </div>`;
   }).join('');
+  legend.innerHTML = html;
 }
 
-function toggleType(type) {
-  if (hiddenTypes.has(type)) hiddenTypes.delete(type); else hiddenTypes.add(type);
+function toggleLegendType(type) {
+  // Toggle in filter state
+  const checkbox = document.querySelector(`#typeFilters input[data-type="${type}"]`);
+  if (checkbox) {
+    checkbox.checked = !checkbox.checked;
+    toggleTypeFilter(type, checkbox.checked);
+  }
+  // Update legend visual
   document.querySelectorAll('.legend-item').forEach(el => {
-    el.classList.toggle('inactive', hiddenTypes.has(el.dataset.type));
-  });
-  d3.selectAll('.node').style('display', d => hiddenTypes.has(d.type) ? 'none' : null);
-  d3.selectAll('.link').style('display', d => {
-    const sType = d.source?.type || graphData.nodes.find(n => n.id === (d.source?.id || d.source))?.type;
-    const tType = d.target?.type || graphData.nodes.find(n => n.id === (d.target?.id || d.target))?.type;
-    return (hiddenTypes.has(sType) || hiddenTypes.has(tType)) ? 'none' : null;
+    const t = el.dataset.type;
+    el.classList.toggle('inactive', !filterState.types.has(t));
   });
 }
 
@@ -386,11 +858,20 @@ function renderGraph() {
       .append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', color);
   });
 
-  const links = graphData.edges.map(e => ({
+  // 筛选可见节点和边
+  const visibleNodes = graphData.nodes.filter(n => isNodeVisible(n));
+  const visibleNodeIds = new Set(visibleNodes.map(n => n.id));
+  const visibleEdges = graphData.edges.filter(e => {
+    const sid = e.source?.id || e.source;
+    const tid = e.target?.id || e.target;
+    return visibleNodeIds.has(sid) && visibleNodeIds.has(tid);
+  });
+
+  const links = visibleEdges.map(e => ({
     source: e.source, target: e.target, type: e.type,
     description: e.description || '', contradictionMeta: e.contradictionMeta || {},
   }));
-  const nodes = graphData.nodes.map(n => ({
+  const nodes = visibleNodes.map(n => ({
     id: n.id, name: n.name, type: n.type,
     summary: n.summary || '', tags: n.tags || [],
     knowledgeMeta: n.knowledgeMeta || {}, entityMeta: n.entityMeta || {}, claimMeta: n.claimMeta || {},
@@ -402,13 +883,25 @@ function renderGraph() {
     .force('center', d3.forceCenter(width / 2, height / 2))
     .force('collision', d3.forceCollide().radius(d => (SIZES[d.type] || 8) + 6));
 
-  // 边
+  // 社区聚类力
+  if (clusterMode && !localMode) {
+    simulation.force('cluster', forceCluster(nodes));
+  }
+
+  // 边 (可见边 + hover 区域)
   linkGroup = g.append('g');
   const link = linkGroup.selectAll('line').data(links).join('line')
     .attr('class', d => 'link' + (d.type === 'contradicts' ? ' contradicts' : ''))
     .attr('stroke', d => EDGE_COLORS[d.type] || '#30363d')
     .attr('stroke-width', d => d.type === 'contradicts' ? 3 : 1.5)
     .attr('marker-end', d => `url(#arrow-${d.type})`);
+
+  // 边 hover 区域 (透明宽线条)
+  linkGroup.selectAll('.edge-hit-area').data(links).join('line')
+    .attr('class', 'edge-hit-area')
+    .on('mouseover', showEdgeTooltip)
+    .on('mousemove', showEdgeTooltip)
+    .on('mouseout', hideEdgeTooltip);
 
   // 节点
   nodeGroup = g.append('g');
@@ -434,15 +927,37 @@ function renderGraph() {
   node.append('text').attr('dx', d => (SIZES[d.type] || 8) + 5).attr('dy', 3)
     .text(d => d.name.length > 24 ? d.name.slice(0, 24) + '…' : d.name);
 
-  node.on('mouseover', showTooltip).on('mouseout', hideTooltip).on('click', (e, d) => { e.stopPropagation(); selectNode(d); });
+  node.on('mouseover', showTooltip).on('mouseout', hideTooltip)
+    .on('click', (e, d) => { e.stopPropagation(); selectNode(d); })
+    .on('dblclick', (e, d) => {
+      e.stopPropagation();
+      if (d.type === 'article') {
+        // 双击文章节点 → 进入局部图谱
+        drillIntoNode(d.id);
+      } else {
+        // 双击实体/声明 → 进入局部图谱
+        drillIntoNode(d.id);
+      }
+    });
 
   simulation.on('tick', () => {
     link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
         .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    // 更新边 hover 区域位置
+    linkGroup.selectAll('.edge-hit-area')
+      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
     node.attr('transform', d => `translate(${d.x},${d.y})`);
   });
 
+  // 更新统计
+  const statsBar = document.getElementById('statsBar');
+  const edgeCount = visibleEdges.length;
+  statsBar.innerHTML = `<span>节点 ${nodes.length}</span><span>边 ${edgeCount}</span>` +
+    (localMode ? '<span style="color:#58a6ff">局部视图</span>' : '');
+
   svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(0, 0).scale(0.7));
+  applyFilters();
 }
 
 function dragStarted(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
@@ -460,6 +975,7 @@ function showTooltip(event, d) {
   let html = `<h3>${d.name}</h3>`;
   html += `<span class="tag ${d.type}">${LABELS[d.type] || d.type}</span>`;
   if (d.summary) html += `<p style="margin-top:6px;color:#8b949e;font-size:12px">${d.summary.slice(0, 120)}…</p>`;
+  if (d.complexity) html += `<p style="margin-top:4px;font-size:11px"><span style="background:#21262d;color:#8b949e;padding:1px 6px;border-radius:3px">复杂度: ${d.complexity}</span></p>`;
   if (d.type === 'article') html += `<p style="margin-top:6px;color:#58a6ff;font-size:11px">点击查看完整内容 →</p>`;
   const conns = getConnectedIds(d.id);
   if (conns.length > 0) html += `<p style="margin-top:4px;color:#8b949e;font-size:11px">${conns.length} 个关联节点</p>`;
@@ -668,6 +1184,26 @@ function loadInfoTab(d) {
   if (d.type === 'article' && d.knowledgeMeta) {
     const m = d.knowledgeMeta;
     if (m.category) html += `<p style="font-size:12px;margin:4px 0;color:#8b949e">分类: <span style="color:#58a6ff">${m.category}</span></p>`;
+    if (d.complexity) html += `<p style="font-size:12px;margin:4px 0;color:#8b949e">复杂度: <span style="color:#58a6ff">${d.complexity}</span></p>`;
+    if (d.filePath) html += `<p style="font-size:12px;margin:4px 0;color:#8b949e">文件: <span style="color:#6e7681;font-family:monospace">${escapeHtml(d.filePath)}</span></p>`;
+    // Wikilinks
+    if (m.wikilinks && m.wikilinks.length > 0) {
+      html += `<div style="margin-top:8px"><p style="font-size:12px;color:#8b949e;margin-bottom:4px">文档内链接 (${m.wikilinks.length})</p>`;
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      m.wikilinks.forEach(wl => {
+        html += `<span style="font-size:11px;background:#1f6feb22;color:#58a6ff;padding:1px 6px;border-radius:3px">${escapeHtml(wl)}</span>`;
+      });
+      html += '</div></div>';
+    }
+    // Backlinks
+    if (m.backlinks && m.backlinks.length > 0) {
+      html += `<div style="margin-top:8px"><p style="font-size:12px;color:#8b949e;margin-bottom:4px">被引用 (${m.backlinks.length})</p>`;
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      m.backlinks.forEach(bl => {
+        html += `<span style="font-size:11px;background:#8957e522;color:#bc8cff;padding:1px 6px;border-radius:3px">${escapeHtml(bl)}</span>`;
+      });
+      html += '</div></div>';
+    }
   }
   if (d.type === 'entity' && d.entityMeta) {
     const m = d.entityMeta;
