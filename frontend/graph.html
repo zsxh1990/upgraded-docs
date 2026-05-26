@@ -199,9 +199,136 @@ async function ensureDocMap() {
 async function loadGraph() {
   const resp = await fetch('/api/graph');
   graphData = await resp.json();
+  deriveImplicitEdges();
   renderStats();
   renderLegend();
   renderGraph();
+}
+
+// 从 entity/claim 的 sourceDoc 元数据推导隐式边
+function deriveImplicitEdges() {
+  const articleMap = {};
+  graphData.nodes.forEach(n => { if (n.type === 'article') articleMap[n.name] = n.id; });
+  const edgeSet = new Set(graphData.edges.map(e => (e.source?.id || e.source) + '|' + (e.target?.id || e.target)));
+
+  graphData.nodes.forEach(n => {
+    const srcDoc = n.entityMeta?.sourceDoc || n.claimMeta?.sourceDoc;
+    if (!srcDoc) return;
+    const articleId = articleMap[srcDoc];
+    if (!articleId) return;
+    const key = articleId + '|' + n.id;
+    if (edgeSet.has(key)) return;
+    graphData.edges.push({
+      source: articleId, target: n.id,
+      type: n.type === 'entity' ? 'has_entity' : 'has_claim',
+      description: n.summary || '', weight: 0.8,
+    });
+    edgeSet.add(key);
+  });
+}
+
+// 在文本中查找关键词周围的上下文摘录
+function findExcerpts(text, keyword, contextChars, maxExcerpts) {
+  if (!text || !keyword) return [];
+  contextChars = contextChars || 80;
+  maxExcerpts = maxExcerpts || 3;
+  const excerpts = [];
+  const lower = text.toLowerCase();
+  const kwLower = keyword.toLowerCase();
+
+  // Try exact match first
+  let pos = 0;
+  while (excerpts.length < maxExcerpts) {
+    const idx = lower.indexOf(kwLower, pos);
+    if (idx === -1) break;
+    const start = Math.max(0, idx - contextChars);
+    const end = Math.min(text.length, idx + keyword.length + contextChars);
+    let snippet = text.slice(start, end);
+    if (start > 0) snippet = '…' + snippet;
+    if (end < text.length) snippet += '…';
+    excerpts.push({ text: snippet, pos: idx });
+    pos = idx + keyword.length;
+  }
+
+  // If no exact match and keyword has multiple words, try proximity search
+  if (excerpts.length === 0 && keyword.length > 3) {
+    const words = kwLower.split(/\s+/).filter(w => w.length > 1);
+    if (words.length > 1) {
+      const firstWord = words[0];
+      let searchPos = 0;
+      while (excerpts.length < maxExcerpts) {
+        const idx = lower.indexOf(firstWord, searchPos);
+        if (idx === -1) break;
+        // Check if all other words appear within a window
+        const windowEnd = Math.min(text.length, idx + keyword.length * 3);
+        const window = lower.slice(idx, windowEnd);
+        const allFound = words.every(w => window.indexOf(w) !== -1);
+        if (allFound) {
+          const start = Math.max(0, idx - contextChars);
+          const end = Math.min(text.length, windowEnd + contextChars);
+          let snippet = text.slice(start, end);
+          if (start > 0) snippet = '…' + snippet;
+          if (end < text.length) snippet += '…';
+          excerpts.push({ text: snippet, pos: idx });
+        }
+        searchPos = idx + firstWord.length;
+      }
+    }
+  }
+
+  // Fallback: single-word search for each word in the keyword
+  if (excerpts.length === 0) {
+    const words = kwLower.split(/\s+/).filter(w => w.length > 2);
+    for (const word of words) {
+      const idx = lower.indexOf(word);
+      if (idx !== -1) {
+        const start = Math.max(0, idx - contextChars);
+        const end = Math.min(text.length, idx + word.length + contextChars);
+        let snippet = text.slice(start, end);
+        if (start > 0) snippet = '…' + snippet;
+        if (end < text.length) snippet += '…';
+        excerpts.push({ text: snippet, pos: idx });
+        break;
+      }
+    }
+  }
+
+  return excerpts;
+}
+
+// 高亮文本中的关键词
+function highlightKeyword(text, keyword) {
+  if (!keyword) return escapeHtml(text);
+  const escaped = escapeHtml(text);
+  // Split keyword into words and highlight each
+  const words = keyword.split(/\s+/).filter(w => w.length > 1);
+  let result = escaped;
+  words.forEach(w => {
+    const re = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    result = result.replace(re, m => `<mark style="background:#d2992244;color:#d29922;padding:1px 2px;border-radius:2px">${m}</mark>`);
+  });
+  return result;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// 获取源文档内容（从 graph 节点的 knowledgeMeta.content 或 API）
+async function getSourceDocContent(docTitle) {
+  // 先从 graph 节点获取
+  const articleNode = graphData.nodes.find(n => n.type === 'article' && n.name === docTitle);
+  if (articleNode?.knowledgeMeta?.content) return articleNode.knowledgeMeta.content;
+  // 否则从 API 获取
+  const map = await ensureDocMap();
+  const docId = map[docTitle];
+  if (!docId) return null;
+  try {
+    const resp = await fetch(`/api/document/${encodeURIComponent(docId)}`);
+    if (!resp.ok) return null;
+    const doc = await resp.json();
+    return doc.content || null;
+  } catch { return null; }
 }
 
 function renderStats() {
@@ -496,12 +623,28 @@ function loadRelationsTab(d) {
     items.forEach(({ node: cn, edge }) => {
       const edgeLabel = edge ? (EDGE_LABELS[edge.type] || edge.type) : '';
       const edgeColor = edge ? (EDGE_COLORS[edge.type] || '#8b949e') : '#8b949e';
-      const desc = edge?.description ? `<div style="font-size:11px;color:#484f58;margin-top:2px">${edge.description.slice(0, 60)}</div>` : '';
+      // Show node summary as context
+      const summary = cn.summary ? `<div style="font-size:11px;color:#8b949e;margin-top:3px;line-height:1.4">${escapeHtml(cn.summary.slice(0, 120))}${cn.summary.length > 120 ? '…' : ''}</div>` : '';
+      // For article nodes connected to current entity/claim, show where the keyword appears
+      let excerpt = '';
+      if (d.type !== 'article' && cn.type === 'article' && cn.knowledgeMeta?.content) {
+        const exs = findExcerpts(cn.knowledgeMeta.content, d.name, 60, 1);
+        if (exs.length > 0) {
+          excerpt = `<div style="font-size:11px;color:#6e7681;margin-top:3px;padding:4px 8px;background:#21262d;border-radius:4px;border-left:2px solid ${COLORS[d.type]}44;line-height:1.4">${highlightKeyword(exs[0].text, d.name)}</div>`;
+        }
+      }
+      // For entity/claim connected to current article, show excerpt from current article
+      if (d.type === 'article' && (cn.type === 'entity' || cn.type === 'claim') && d.knowledgeMeta?.content) {
+        const exs = findExcerpts(d.knowledgeMeta.content, cn.name, 60, 1);
+        if (exs.length > 0) {
+          excerpt = `<div style="font-size:11px;color:#6e7681;margin-top:3px;padding:4px 8px;background:#21262d;border-radius:4px;border-left:2px solid ${COLORS[cn.type]}44;line-height:1.4">${highlightKeyword(exs[0].text, cn.name)}</div>`;
+        }
+      }
       html += `<div class="relation-item" onclick="navigateToNode('${cn.id}')">
         <div class="relation-dot" style="background:${COLORS[cn.type]}"></div>
         <div class="relation-info">
           <div class="relation-name">${cn.name}</div>
-          ${desc}
+          ${summary}${excerpt}
         </div>
         ${edgeLabel ? `<span class="relation-edge" style="background:${edgeColor}22;color:${edgeColor}">${edgeLabel}</span>` : ''}
       </div>`;
@@ -518,27 +661,25 @@ function loadInfoTab(d) {
       <div style="width:10px;height:10px;border-radius:50%;background:${COLORS[d.type]}"></div>
       <span style="font-size:14px;font-weight:600">${LABELS[d.type]}</span>
     </div>`;
-  if (d.summary) html += `<p style="font-size:13px;color:#c9d1d9;line-height:1.6;margin-bottom:12px">${d.summary}</p>`;
+  if (d.summary) html += `<p style="font-size:13px;color:#c9d1d9;line-height:1.6;margin-bottom:12px">${escapeHtml(d.summary)}</p>`;
   html += '</div>';
 
   // Metadata
   if (d.type === 'article' && d.knowledgeMeta) {
     const m = d.knowledgeMeta;
-    html += '<div style="font-size:12px">';
-    if (m.docId) html += `<p style="margin:4px 0;color:#8b949e">文档ID: <span style="color:#c9d1d9">${m.docId}</span></p>`;
-    html += '</div>';
+    if (m.category) html += `<p style="font-size:12px;margin:4px 0;color:#8b949e">分类: <span style="color:#58a6ff">${m.category}</span></p>`;
   }
   if (d.type === 'entity' && d.entityMeta) {
     const m = d.entityMeta;
     html += '<div style="font-size:12px">';
+    if (m.entityType) html += `<p style="margin:4px 0;color:#8b949e">实体类型: <span style="color:#3fb950">${m.entityType}</span></p>`;
     if (m.occurrences) html += `<p style="margin:4px 0;color:#8b949e">出现次数: <span style="color:#3fb950">${m.occurrences}</span></p>`;
-    if (m.type) html += `<p style="margin:4px 0;color:#8b949e">类型: <span style="color:#c9d1d9">${m.type}</span></p>`;
     html += '</div>';
   }
   if (d.type === 'claim' && d.claimMeta) {
     const m = d.claimMeta;
     html += '<div style="font-size:12px">';
-    if (m.source) html += `<p style="margin:4px 0;color:#8b949e">来源: <span style="color:#c9d1d9">${m.source}</span></p>`;
+    if (m.category) html += `<p style="margin:4px 0;color:#8b949e">声明类型: <span style="color:#d29922">${m.category}</span></p>`;
     html += '</div>';
   }
 
@@ -554,18 +695,96 @@ function loadInfoTab(d) {
     const srcTitle = d.entityMeta?.sourceDoc || d.claimMeta?.sourceDoc || d.knowledgeMeta?.sourceDoc;
     if (srcTitle) {
       const srcNode = graphData.nodes.find(n => n.type === 'article' && n.name === srcTitle);
+      html += `<div style="margin-top:16px;padding-top:12px;border-top:1px solid #30363d">
+        <p style="font-size:12px;color:#8b949e;margin-bottom:6px">来源文档</p>`;
       if (srcNode) {
-        html += `<div style="margin-top:16px;padding-top:12px;border-top:1px solid #30363d">
-          <p style="font-size:12px;color:#8b949e;margin-bottom:6px">来源文档</p>
-          <div class="article-card" onclick="navigateToNode('${srcNode.id}')">
-            <h4>${srcNode.name}</h4>
-          </div>
+        html += `<div class="article-card" onclick="navigateToNode('${srcNode.id}')">
+          <h4>${escapeHtml(srcNode.name)}</h4>
         </div>`;
+      }
+      html += '</div>';
+
+      // Excerpts placeholder — filled async below
+      html += '<div id="excerptsArea"></div>';
+
+      // Sibling knowledge points
+      const siblings = graphData.nodes.filter(n =>
+        n.id !== d.id && n.type !== 'article' && n.type !== 'topic' &&
+        (n.entityMeta?.sourceDoc === srcTitle || n.claimMeta?.sourceDoc === srcTitle)
+      ).slice(0, 8);
+      if (siblings.length > 0) {
+        html += `<div style="margin-top:16px;padding-top:12px;border-top:1px solid #30363d">
+          <p style="font-size:12px;color:#8b949e;margin-bottom:6px">同文档知识点 (${siblings.length})</p>`;
+        siblings.forEach(s => {
+          html += `<div class="relation-item" onclick="navigateToNode('${s.id}')" style="padding:6px 8px">
+            <div class="relation-dot" style="background:${COLORS[s.type]};width:8px;height:8px"></div>
+            <div class="relation-info">
+              <div class="relation-name" style="font-size:12px">${escapeHtml(s.name)}</div>
+              ${s.summary ? `<div style="font-size:11px;color:#6e7681">${escapeHtml(s.summary.slice(0, 60))}</div>` : ''}
+            </div>
+          </div>`;
+        });
+        html += '</div>';
       }
     }
   }
 
+  // For article nodes: show connected entities/claims
+  if (d.type === 'article') {
+    const entities = graphData.nodes.filter(n => n.type === 'entity' && n.entityMeta?.sourceDoc === d.name);
+    const claims = graphData.nodes.filter(n => n.type === 'claim' && n.claimMeta?.sourceDoc === d.name);
+    if (entities.length > 0 || claims.length > 0) {
+      html += `<div style="margin-top:16px;padding-top:12px;border-top:1px solid #30363d">`;
+      if (entities.length > 0) {
+        html += `<p style="font-size:12px;color:#8b949e;margin-bottom:4px">
+          <span style="color:#3fb950">${entities.length}</span> 个实体: `;
+        html += entities.slice(0, 5).map(e =>
+          `<span style="font-size:11px;background:#23863622;color:#3fb950;padding:1px 6px;border-radius:3px;margin-right:4px;cursor:pointer" onclick="navigateToNode('${e.id}')">${escapeHtml(e.name)}</span>`
+        ).join('');
+        if (entities.length > 5) html += `<span style="font-size:11px;color:#6e7681">+${entities.length - 5}</span>`;
+        html += '</p>';
+      }
+      if (claims.length > 0) {
+        html += `<p style="font-size:12px;color:#8b949e;margin-bottom:4px;margin-top:6px">
+          <span style="color:#d29922">${claims.length}</span> 个声明: `;
+        html += claims.slice(0, 5).map(c =>
+          `<span style="font-size:11px;background:#9e6a0322;color:#d29922;padding:1px 6px;border-radius:3px;margin-right:4px;cursor:pointer" onclick="navigateToNode('${c.id}')">${escapeHtml(c.name)}</span>`
+        ).join('');
+        if (claims.length > 5) html += `<span style="font-size:11px;color:#6e7681">+${claims.length - 5}</span>`;
+        html += '</p>';
+      }
+      html += '</div>';
+    }
+  }
+
   body.innerHTML = html;
+
+  // Load excerpts async and append to placeholder
+  if (d.type !== 'article') {
+    const srcTitle = d.entityMeta?.sourceDoc || d.claimMeta?.sourceDoc;
+    if (srcTitle) loadExcerptsAsync(d, srcTitle);
+  }
+}
+
+async function loadExcerptsAsync(d, srcTitle) {
+  const area = document.getElementById('excerptsArea');
+  if (!area) return;
+  try {
+    const content = await getSourceDocContent(srcTitle);
+    if (!content || !document.getElementById('excerptsArea')) return;
+    const excerpts = findExcerpts(content, d.name, 100, 3);
+    if (excerpts.length > 0) {
+      let html = `<div style="margin-top:16px;padding-top:12px;border-top:1px solid #30363d">
+        <p style="font-size:12px;color:#8b949e;margin-bottom:8px">上下文摘录 (${excerpts.length} 处)</p>`;
+      excerpts.forEach(ex => {
+        html += `<div style="margin-bottom:8px;padding:10px 12px;background:#21262d;border-radius:6px;border-left:3px solid ${COLORS[d.type]};font-size:12px;color:#c9d1d9;line-height:1.6">
+          ${highlightKeyword(ex.text, d.name)}
+        </div>`;
+      });
+      html += '</div>';
+      area.innerHTML = html;
+    }
+  } catch (e) { /* silently skip */ }
 }
 
 // ── 节点间导航 ──
