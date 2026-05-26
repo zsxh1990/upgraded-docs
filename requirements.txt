@@ -12,7 +12,4 @@ python-docx>=1.0
 openpyxl>=3.1
 pymupdf4llm>=0.1
 requests>=2.28
-
-# 可选: 飞书 OpenAPI (超链接递归)
-# httpx  (如果使用 LM Studio embedding)
-# fastembed 会自动安装 ONNX 运行时
+httpx>=0.24

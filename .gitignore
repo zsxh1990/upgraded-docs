@@ -1,8 +1,16 @@
 *.db
+*.pyc
 __pycache__/
 .DS_Store
 venv/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
 
 # 入库文档留在本地，不上 GitHub
 data/documents/
 data/robot_knowledge.db
+data/conflicts/

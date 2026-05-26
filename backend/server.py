@@ -1,7 +1,7 @@
 """Flask API 服务 — 搜索 / 冲突 / 配置 / 统计
 
 启动: python3 server.py
-访问: http://localhost:5000
+访问: http://localhost:8080
 """
 
 import json
@@ -30,6 +30,7 @@ from conflict_detector import (
 )
 
 app = Flask(__name__, static_folder=str(FRONTEND_DIR), static_url_path="")
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50MB 上传限制
 
 # ── 数据库初始化 ──
 
@@ -91,7 +92,10 @@ def rebuild_search_index():
 def api_search():
     q = request.args.get("q", "").strip()
     cat = request.args.get("category", "")
-    top_k = min(int(request.args.get("top_k", 10)), 50)
+    try:
+        top_k = min(int(request.args.get("top_k", 10)), 50)
+    except (ValueError, TypeError):
+        top_k = 10
     if not q:
         return jsonify({"results": [], "total": 0})
 
@@ -304,6 +308,39 @@ def api_detect_conflicts():
 def api_rebuild_index():
     count = rebuild_search_index()
     return jsonify({"indexed": count})
+
+
+@app.route("/api/upload", methods=["POST"])
+def api_upload():
+    """上传并导入文档。"""
+    if "file" not in request.files:
+        return jsonify({"error": "未选择文件"}), 400
+    f = request.files["file"]
+    if not f.filename:
+        return jsonify({"error": "文件名为空"}), 400
+
+    ext = Path(f.filename).suffix.lower()
+    if ext not in {".md", ".txt", ".docx", ".xlsx", ".pptx"}:
+        return jsonify({"error": f"不支持的格式: {ext}"}), 400
+
+    from werkzeug.utils import secure_filename
+    safe_name = secure_filename(f.filename) or f"upload_{int(datetime.now().timestamp())}{ext}"
+
+    upload_dir = BASE / "data" / "documents"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    save_path = upload_dir / safe_name
+    f.save(str(save_path))
+
+    # 导入
+    sys.path.insert(0, str(BASE))
+    from scripts.import_docs import import_file
+    result = import_file(save_path)
+    if result.get("skipped"):
+        return jsonify({"error": result.get("reason", "导入失败")}), 400
+
+    # 重建索引
+    rebuild_search_index()
+    return jsonify({"ok": True, "title": result.get("title", f.filename)})
 
 
 # ── Obsidian 深度绑定 ──
@@ -602,12 +639,23 @@ def inject_globals():
     return dict(pending_conflicts=conflict_count)
 
 
+# ── 健康检查 ──
+
+@app.route("/api/health")
+def api_health():
+    conn = get_db()
+    count = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+    conn.close()
+    return jsonify({"status": "ok", "documents": count})
+
+
 # ── 启动 ──
 
 if __name__ == "__main__":
     count = rebuild_search_index()
+    host = os.environ.get("KB_HOST", "127.0.0.1")
     print(f"📚 知识库: {count} 篇文档已索引")
-    print(f"🌐 启动: http://localhost:5000")
-    print(f"   搜索: http://localhost:5000/?q=零点标定")
-    print(f"   冲突: http://localhost:5000/conflicts.html")
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    print(f"🌐 启动: http://localhost:8080")
+    print(f"   搜索: http://localhost:8080/?q=零点标定")
+    print(f"   冲突: http://localhost:8080/conflicts.html")
+    app.run(host=host, port=8080, debug=False)

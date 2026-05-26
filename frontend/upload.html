@@ -2,162 +2,155 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>上传文档 - 机器人知识库</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文档上传 — 机器人知识库</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f7; color: #1d1d1f; min-height: 100vh; }
-header { background: #fff; border-bottom: 1px solid #e5e5e7; padding: 16px 40px; display: flex; align-items: center; gap: 24px; }
-header h1 { font-size: 18px; font-weight: 600; }
-header nav { display: flex; gap: 16px; }
-header nav a { color: #555; text-decoration: none; font-size: 14px; }
-header nav a:hover { color: #0066cc; }
-.container { max-width: 720px; margin: 40px auto; padding: 0 20px; }
-.dropzone { background: #fff; border: 2px dashed #c7c7cc; border-radius: 16px; padding: 48px 24px; text-align: center; cursor: pointer; transition: border .2s, background .2s; }
-.dropzone:hover, .dropzone.dragover { border-color: #0066cc; background: #f0f5ff; }
-.dropzone .icon { font-size: 48px; margin-bottom: 12px; }
-.dropzone p { font-size: 16px; color: #555; }
-.dropzone .hint { font-size: 13px; color: #999; margin-top: 8px; }
-#file-input { display: none; }
-.file-list { margin-top: 24px; }
-.file-item { background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-.file-item .name { flex: 1; font-size: 14px; }
-.file-item .status { font-size: 13px; white-space: nowrap; }
-.status-pending { color: #999; }
-.status-importing { color: #0066cc; }
-.status-ok { color: #34c759; }
-.status-skip { color: #ff9500; }
-.status-conflict { color: #ff3b30; }
-.progress { margin-top: 24px; display: none; }
-.progress-bar { height: 4px; background: #e5e5e7; border-radius: 2px; overflow: hidden; }
-.progress-fill { height: 100%; background: #0066cc; width: 0; transition: width .3s; }
-.progress-text { font-size: 13px; color: #666; margin-top: 6px; text-align: center; }
-.result-summary { margin-top: 24px; background: #fff; border-radius: 12px; padding: 20px; display: none; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-.result-summary h3 { font-size: 15px; margin-bottom: 12px; }
-.result-summary .row { display: flex; gap: 24px; font-size: 14px; }
-.result-summary .row span { color: #666; }
-.result-summary .row strong { color: #1d1d1f; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f5f7; color: #172b4d; }
+.header { background: #0747A6; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 24px; }
+.header h1 { font-size: 20px; }
+.header nav { display: flex; gap: 16px; }
+.header nav a { color: #b3d4ff; text-decoration: none; font-size: 14px; }
+.header nav a:hover { color: #fff; }
+.container { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+.drop-zone {
+  border: 2px dashed #dfe1e6; border-radius: 8px; padding: 48px 24px;
+  text-align: center; background: #fff; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+}
+.drop-zone:hover, .drop-zone.dragover { border-color: #0747A6; background: #f0f4ff; }
+.drop-zone p { font-size: 15px; color: #5e6c84; margin-bottom: 8px; }
+.drop-zone .hint { font-size: 13px; color: #97a0af; }
+.file-list { margin-top: 16px; }
+.file-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fff; padding: 12px 16px; border-radius: 6px; margin-bottom: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.file-name { font-size: 14px; font-weight: 500; }
+.file-size { font-size: 13px; color: #5e6c84; }
+.file-status { font-size: 13px; padding: 2px 8px; border-radius: 4px; }
+.file-status.ok { background: #e3fcef; color: #006644; }
+.file-status.err { background: #ffebe6; color: #bf2600; }
+.file-status.uploading { background: #deebff; color: #0747A6; }
+.upload-btn {
+  margin-top: 16px; padding: 12px 32px; background: #0747A6; color: #fff;
+  border: none; border-radius: 6px; font-size: 15px; cursor: pointer;
+}
+.upload-btn:hover { background: #0052cc; }
+.upload-btn:disabled { background: #a5adba; cursor: not-allowed; }
+.result-box {
+  margin-top: 20px; padding: 16px; border-radius: 6px; background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08); display: none;
+}
+.result-box h3 { font-size: 15px; margin-bottom: 8px; }
+.result-box pre { font-size: 13px; white-space: pre-wrap; color: #172b4d; }
 </style>
 </head>
 <body>
-<header>
-  <h1>📚 机器人知识库</h1>
+<div class="header">
+  <h1>机器人知识库</h1>
   <nav>
     <a href="/">搜索</a>
-    <a href="/conflicts.html">冲突</a>
-    <a href="/upload.html" style="color:#0066cc;font-weight:500;">上传</a>
+    <a href="/conflicts.html">冲突管理</a>
+    <a href="/graph.html">知识图谱</a>
+    <a href="/upload.html">文档上传</a>
   </nav>
-</header>
+</div>
+
 <div class="container">
-  <div class="dropzone" id="dropzone">
-    <div class="icon">📄</div>
-    <p>拖拽 Office/PDF 文档到此处</p>
-    <p class="hint">或点击选择文件 · 支持 .docx .xlsx .pptx .pdf .md .txt</p>
-  </div>
-  <input type="file" id="file-input" multiple accept=".docx,.xlsx,.pptx,.pdf,.md,.txt">
-
-  <div class="file-list" id="file-list"></div>
-
-  <div class="progress" id="progress">
-    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-    <div class="progress-text" id="progress-text">准备中...</div>
+  <h2 style="margin-bottom:16px;font-size:18px;">上传文档</h2>
+  <div class="drop-zone" id="dropZone">
+    <p>拖拽文件到此处，或点击选择文件</p>
+    <p class="hint">支持 .md .txt .docx .xlsx .pptx</p>
+    <input type="file" id="fileInput" multiple accept=".md,.txt,.docx,.xlsx,.pptx" style="display:none">
   </div>
 
-  <div class="result-summary" id="result-summary">
+  <div class="file-list" id="fileList"></div>
+  <button class="upload-btn" id="uploadBtn" disabled onclick="uploadFiles()">上传并导入</button>
+
+  <div class="result-box" id="resultBox">
     <h3>导入结果</h3>
-    <div class="row">
-      <span>成功: <strong id="r-ok">0</strong></span>
-      <span>跳过: <strong id="r-skip">0</strong></span>
-      <span>冲突: <strong id="r-conflict">0</strong></span>
-    </div>
+    <pre id="resultText"></pre>
   </div>
 </div>
 
 <script>
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('file-input');
-const fileList = document.getElementById('file-list');
-const progress = document.getElementById('progress');
-const progressFill = document.getElementById('progress-fill');
-const progressText = document.getElementById('progress-text');
-const resultSummary = document.getElementById('result-summary');
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const uploadBtn = document.getElementById('uploadBtn');
+const resultBox = document.getElementById('resultBox');
+const resultText = document.getElementById('resultText');
 
-dropzone.addEventListener('click', () => fileInput.click());
+let selectedFiles = [];
 
-dropzone.addEventListener('dragover', e => {
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
   e.preventDefault();
-  dropzone.classList.add('dragover');
+  dropZone.classList.remove('dragover');
+  addFiles(e.dataTransfer.files);
 });
-dropzone.addEventListener('dragleave', () => {
-  dropzone.classList.remove('dragover');
-});
-dropzone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropzone.classList.remove('dragover');
-  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
-});
+fileInput.addEventListener('change', () => addFiles(fileInput.files));
 
-fileInput.addEventListener('change', () => {
-  if (fileInput.files.length) handleFiles(fileInput.files);
-});
-
-async function handleFiles(files) {
-  fileList.innerHTML = '';
-  resultSummary.style.display = 'none';
-  const allowed = ['.docx','.xlsx','.pptx','.pdf','.md','.txt'];
-  let ok = 0, skip = 0, conflict = 0;
-
-  for (const file of files) {
-    const ext = '.' + file.name.split('.').pop().toLowerCase();
-    if (!allowed.includes(ext)) {
-      addFileItem(file.name, '不支持', 'status-skip');
-      skip++;
-      continue;
+function addFiles(files) {
+  for (const f of files) {
+    if (!selectedFiles.some(s => s.name === f.name)) {
+      selectedFiles.push(f);
     }
-    addFileItem(file.name, '导入中...', 'status-importing');
-    progress.style.display = 'block';
+  }
+  renderFileList();
+}
 
-    const formData = new FormData();
-    formData.append('file', file);
+function renderFileList() {
+  fileList.innerHTML = '';
+  selectedFiles.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = `
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${(f.size / 1024).toFixed(1)} KB</span>
+      <span class="file-status" id="status-${i}">待上传</span>
+    `;
+    fileList.appendChild(div);
+  });
+  uploadBtn.disabled = selectedFiles.length === 0;
+}
+
+async function uploadFiles() {
+  uploadBtn.disabled = true;
+  let success = 0, failed = 0;
+
+  for (let i = 0; i < selectedFiles.length; i++) {
+    const f = selectedFiles[i];
+    const statusEl = document.getElementById(`status-${i}`);
+    statusEl.className = 'file-status uploading';
+    statusEl.textContent = '上传中...';
 
     try {
-      const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+      const form = new FormData();
+      form.append('file', f);
+      const resp = await fetch('/api/upload', { method: 'POST', body: form });
       const data = await resp.json();
-      if (data.status === 'ok' || data.status === 'passed') {
-        addFileItem(file.name, '✅ 完成', 'status-ok');
-        ok++;
-      } else if (data.conflicts_found > 0 || data.status === 'conflict_pending') {
-        addFileItem(file.name, `⚠️ ${data.conflicts_found} 个冲突`, 'status-conflict');
-        ok++;
-        conflict += data.conflicts_found || 0;
+      if (resp.ok) {
+        statusEl.className = 'file-status ok';
+        statusEl.textContent = '完成';
+        success++;
       } else {
-        addFileItem(file.name, `⏭️ ${data.reason || '跳过'}`, 'status-skip');
-        skip++;
+        statusEl.className = 'file-status err';
+        statusEl.textContent = data.error || '失败';
+        failed++;
       }
-    } catch (err) {
-      addFileItem(file.name, '❌ 导入失败', 'status-skip');
-      skip++;
+    } catch (e) {
+      statusEl.className = 'file-status err';
+      statusEl.textContent = '网络错误';
+      failed++;
     }
   }
 
-  progress.style.display = 'none';
-  resultSummary.style.display = 'block';
-  document.getElementById('r-ok').textContent = ok;
-  document.getElementById('r-skip').textContent = skip;
-  document.getElementById('r-conflict').textContent = conflict;
-}
-
-function addFileItem(name, status, cls) {
-  const div = document.createElement('div');
-  div.className = 'file-item';
-  div.innerHTML = `<span class="name">${escapeHtml(name)}</span><span class="status ${cls}">${status}</span>`;
-  fileList.appendChild(div);
-}
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+  resultBox.style.display = 'block';
+  resultText.textContent = `上传完成: ${success} 成功, ${failed} 失败 (共 ${selectedFiles.length} 个文件)\n\n刷新页面搜索新文档。`;
 }
 </script>
 </body>

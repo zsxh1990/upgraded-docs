@@ -30,6 +30,61 @@ CONFLICTS_DIR = BASE / "data" / "conflicts"
 
 SUPPORTED = {".md", ".txt", ".docx", ".xlsx", ".pptx"}
 
+# 基于标题关键词的自动分类规则
+_CATEGORY_RULES = [
+    (["编程", "FANUC", "KUKA", "ABB"], "编程标准"),
+    (["应用程序", "FDS", "搬运", "涂胶焊接"], "应用程序"),
+    (["招标", "SOR", "框架协议"], "招标与框架协议"),
+    (["仿真", "虚拟调试", "离线编程", "Tecnomatix", "Plant Simulation"], "仿真"),
+    (["标定", "测量", "BASE测量", "TCP校准"], "标定与测量"),
+    (["需求清单", "清单"], "需求与清单"),
+    (["更新", "补丁", "反馈"], "更新记录"),
+    (["车身", "组态", "数模"], "车身工程"),
+    (["管线包", "行走轴", "换枪盘", "视觉", "控制柜", "NC柔性"], "机器人硬件"),
+    (["资源命名", "命名规则", "节点层级", "数据存放", "运动机构"], "规范与标准"),
+    (["技术规范", "技术要求", "技术标准"], "技术规范"),
+]
+
+
+def classify(title: str) -> str:
+    for keywords, category in _CATEGORY_RULES:
+        for kw in keywords:
+            if kw in title:
+                return category
+    return "其他"
+
+
+def init_db():
+    """确保数据库表存在。"""
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS documents (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            category TEXT DEFAULT '',
+            filename TEXT DEFAULT '',
+            tags TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS configs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            value TEXT NOT NULL,
+            doc_id TEXT REFERENCES documents(id),
+            updated_at TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_doc_title ON documents(title)")
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
 # ── 辅助: 数据库初始化（结构化数据表） ─────────────────────────────
 
 def _init_structured_tables():
@@ -702,6 +757,10 @@ def import_file(path: Path, category: str = "",
     title = extract_title(text, path.name)
     doc_id = hashlib.md5(str(path.resolve()).encode()).hexdigest()[:16]
 
+    # 自动分类
+    if not category:
+        category = classify(title)
+
     with sqlite3.connect(str(DB_PATH)) as conn:
         conn.execute("""
             INSERT OR REPLACE INTO documents
@@ -820,7 +879,7 @@ if __name__ == "__main__":
 
     if not args.no_semantic:
         print("\n重建语义索引...")
-        sys.path.insert(0, str(BASE / "backend"))
+        sys.path.insert(0, str(BASE))
         from backend.server import rebuild_search_index
         count = rebuild_search_index()
         print(f"语义索引重建完成: {count} 篇")
