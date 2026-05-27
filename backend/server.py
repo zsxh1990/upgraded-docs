@@ -22,7 +22,7 @@ FRONTEND_DIR = BASE / "frontend"
 GRAPH_PATH = BASE / "wiki" / ".understand-anything" / "knowledge-graph.json"
 
 sys.path.insert(0, str(BASE / "backend"))
-from search_engine import build_index, search as _semantic_search
+from search_engine import build_index, search as _semantic_search, search_mode as _search_mode
 import obsidian_bridge
 from conflict_detector import (
     list_conflicts, get_conflict, create_conflict,
@@ -215,6 +215,12 @@ def api_configs():
 
 
 # ── API: 统计 ──
+
+@app.route("/api/search/mode")
+def api_search_mode():
+    """返回当前搜索模式（向量 / BM25-only）。"""
+    return jsonify({"mode": _search_mode()})
+
 
 @app.route("/api/stats")
 def api_stats():

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>文档详情 - 机器人知识库</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f5f7; color: #172b4d; }
@@ -16,13 +17,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #
 .doc-card { background: #fff; border-radius: 6px; padding: 24px 32px; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
 .doc-title { font-size: 22px; font-weight: 600; margin-bottom: 12px; }
 .doc-meta { display: flex; gap: 16px; margin-bottom: 20px; font-size: 13px; color: #7a869a; }
-.doc-content { font-size: 15px; line-height: 1.8; color: #333; white-space: pre-wrap; }
+.doc-content { font-size: 15px; line-height: 1.8; color: #333; }
+.doc-content img { max-width: 100%; height: auto; border-radius: 4px; }
+.doc-content table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+.doc-content th, .doc-content td { border: 1px solid #dfe1e6; padding: 8px 12px; text-align: left; font-size: 14px; }
+.doc-content th { background: #f4f5f7; font-weight: 600; }
+.doc-content code { background: #f4f5f7; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+.doc-content pre { background: #f4f5f7; padding: 16px; border-radius: 6px; overflow-x: auto; }
+.doc-content pre code { background: none; padding: 0; }
+.doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 { color: #0747A6; margin-top: 24px; margin-bottom: 12px; }
 .back { display: inline-block; margin-bottom: 16px; color: #0747A6; text-decoration: none; font-size: 14px; }
 .back:hover { text-decoration: underline; }
 .config-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
 .config-table th { background: #f4f5f7; padding: 8px 12px; text-align: left; font-size: 13px; color: #5e6c84; }
 .config-table td { padding: 8px 12px; border-top: 1px solid #dfe1e6; font-size: 14px; }
 .section-title { font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: #0747A6; }
+.error-msg { text-align: center; padding: 48px; color: #e34935; font-size: 15px; }
 </style>
 </head>
 <body>
@@ -43,7 +53,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #
       <span id="docDate"></span>
     </div>
     <div class="section-title">📄 文档内容</div>
-    <div class="doc-content" id="docContent"></div>
+    <div class="doc-content" id="docContent"><p>加载中...</p></div>
     <div class="section-title">⚙️ 关联配置</div>
     <table class="config-table" id="configTable">
       <thead><tr><th>参数名</th><th>值</th></tr></thead>
@@ -56,27 +66,43 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #
 async function load() {
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
-  if (!id) { document.getElementById('docTitle').textContent = '缺少文档 ID'; return; }
+  if (!id) {
+    document.getElementById('docCard').innerHTML = '<div class="error-msg">缺少文档 ID，请从搜索页进入</div>';
+    return;
+  }
 
-  const r = await fetch('/api/document/' + id);
-  const doc = await r.json();
-  if (doc.error) { document.getElementById('docTitle').textContent = '文档未找到'; return; }
+  try {
+    const r = await fetch('/api/document/' + encodeURIComponent(id));
+    if (!r.ok) throw new Error('文档不存在或网络错误');
+    const doc = await r.json();
+    if (doc.error) {
+      document.getElementById('docCard').innerHTML = '<div class="error-msg">文档未找到 (404)</div>';
+      return;
+    }
 
-  document.getElementById('docTitle').textContent = doc.title || '(无标题)';
-  document.getElementById('docCategory').textContent = doc.category ? '分类: ' + doc.category : '';
-  document.getElementById('docFilename').textContent = doc.filename || '';
-  document.getElementById('docDate').textContent = doc.created_at ? '导入: ' + doc.created_at : '';
-  document.getElementById('docContent').textContent = doc.content || '(无内容)';
-  document.title = doc.title + ' - 机器人知识库';
+    document.getElementById('docTitle').textContent = doc.title || '(无标题)';
+    document.getElementById('docCategory').textContent = doc.category ? '分类: ' + doc.category : '';
+    document.getElementById('docFilename').textContent = doc.filename || '';
+    document.getElementById('docDate').textContent = doc.created_at ? '导入: ' + doc.created_at : '';
+    document.title = doc.title + ' - 机器人知识库';
 
-  // 加载关联配置
-  const cr = await fetch('/api/configs?doc_id=' + id);
-  const configs = await cr.json();
-  const tbody = document.getElementById('configBody');
-  if (configs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#7a869a;padding:16px;">暂无关联参数</td></tr>';
-  } else {
-    tbody.innerHTML = configs.map(c => '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.value) + '</td></tr>').join('');
+    // Markdown 渲染（带 XSS 防御）
+    const content = doc.content || '(无内容)';
+    document.getElementById('docContent').innerHTML = marked.parse(content);
+
+    // 加载关联配置
+    const cr = await fetch('/api/configs?doc_id=' + encodeURIComponent(id));
+    if (!cr.ok) throw new Error('获取配置失败');
+    const configs = await cr.json();
+    const tbody = document.getElementById('configBody');
+    if (configs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#7a869a;padding:16px;">暂无关联参数</td></tr>';
+    } else {
+      tbody.innerHTML = configs.map(c => '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.value) + '</td></tr>').join('');
+    }
+  } catch (e) {
+    document.getElementById('docCard').innerHTML = '<div class="error-msg">加载失败: ' + esc(e.message) + '</div>';
+    console.error('load error:', e);
   }
 }
 

@@ -61,6 +61,16 @@ def _get_model():
     return _MODEL
 
 
+def search_mode() -> str:
+    """返回当前搜索模式: 'vector' | 'bm25_only' | 'no_index'"""
+    model = _get_model()
+    if not model:
+        return "bm25_only"
+    if _EMBEDDINGS is None or _EMBEDDINGS.size == 0:
+        return "no_index"
+    return "vector"
+
+
 def _embed_with_lm_studio(texts: list[str]) -> np.ndarray:
     import httpx
     embeddings = []

@@ -37,6 +37,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #
 .suggestions div { padding: 8px 12px; cursor: pointer; font-size: 14px; }
 .suggestions div:hover { background: #e3eefc; }
 .search-wrap { position: relative; flex: 1; }
+.hint-banner { font-size: 12px; padding: 6px 12px; border-radius: 4px; margin-bottom: 12px; display: none; }
+.hint-banner.info { background: #e3eefc; color: #0747A6; }
+.hint-banner.warn { background: #fff0e0; color: #d97008; }
+mark.highlight { background: #ffeb3b; padding: 1px 3px; border-radius: 2px; }
 </style>
 </head>
 <body>
@@ -58,6 +62,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #
     <div class="stat-item"><span class="stat-label">冲突(待处理)</span><span class="stat-value" id="statConflicts">-</span></div>
     <div class="stat-item"><span class="stat-label">配置项</span><span class="stat-value" id="statConfigs">-</span></div>
   </div>
+
+  <div id="searchModeHint" class="hint-banner"></div>
 
   <div class="search-row">
     <div class="search-wrap">
@@ -81,26 +87,54 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #
 let currentCategory = "";
 
 async function loadStats() {
-  const r = await fetch('/api/stats');
-  const d = await r.json();
-  document.getElementById('statDocs').textContent = d.documents;
-  document.getElementById('statConflicts').textContent = d.conflicts.pending;
-  document.getElementById('statConfigs').textContent = d.configs;
+  try {
+    const r = await fetch('/api/stats');
+    if (!r.ok) throw new Error('获取统计失败');
+    const d = await r.json();
+    document.getElementById('statDocs').textContent = d.documents;
+    document.getElementById('statConflicts').textContent = d.conflicts.pending;
+    document.getElementById('statConfigs').textContent = d.configs;
+  } catch (e) {
+    console.error('loadStats error:', e);
+  }
 }
 loadStats();
 
+async function loadSearchMode() {
+  try {
+    const r = await fetch('/api/search/mode');
+    const d = await r.json();
+    const hint = document.getElementById('searchModeHint');
+    if (d.mode === 'bm25_only') {
+      hint.textContent = '⚠️ 向量模型未加载，当前仅使用关键词搜索（BM25）';
+      hint.className = 'hint-banner warn';
+      hint.style.display = 'block';
+    } else if (d.mode === 'no_index') {
+      hint.textContent = 'ℹ️ 索引为空，导入文档后搜索功能将自动启用';
+      hint.className = 'hint-banner info';
+      hint.style.display = 'block';
+    }
+  } catch (e) { /* ignore */ }
+}
+loadSearchMode();
+
 async function loadCategories() {
-  const r = await fetch('/api/categories');
-  const cats = await r.json();
-  const tab = document.getElementById('tabCat');
-  if (cats.length > 0) {
-    tab.textContent = cats[0].category + ' (' + cats[0].cnt + ')';
-    tab.onclick = function() { switchTab(cats[0].category, this); };
-    tab.classList.remove('tab');
-    tab.className = 'tab';
-    tab.style.display = '';
-  } else {
-    tab.style.display = 'none';
+  try {
+    const r = await fetch('/api/categories');
+    if (!r.ok) throw new Error('获取分类失败');
+    const cats = await r.json();
+    const tab = document.getElementById('tabCat');
+    if (cats.length > 0) {
+      tab.textContent = cats[0].category + ' (' + cats[0].cnt + ')';
+      tab.onclick = function() { switchTab(cats[0].category, this); };
+      tab.classList.remove('tab');
+      tab.className = 'tab';
+      tab.style.display = '';
+    } else {
+      tab.style.display = 'none';
+    }
+  } catch (e) {
+    console.error('loadCategories error:', e);
   }
 }
 loadCategories();
@@ -115,11 +149,17 @@ async function showSuggestions() {
   const q = document.getElementById('searchInput').value.trim();
   const box = document.getElementById('suggestions');
   if (q.length < 2) { box.style.display = 'none'; return; }
-  const r = await fetch('/api/search/suggest?q=' + encodeURIComponent(q));
-  const titles = await r.json();
-  if (titles.length === 0) { box.style.display = 'none'; return; }
-  box.innerHTML = titles.map(t => '<div onclick="selectSuggestion(\'' + t.replace(/'/g,"\\'") + '\')">' + t + '</div>').join('');
-  box.style.display = 'block';
+  try {
+    const r = await fetch('/api/search/suggest?q=' + encodeURIComponent(q));
+    if (!r.ok) throw new Error('获取建议失败');
+    const titles = await r.json();
+    if (titles.length === 0) { box.style.display = 'none'; return; }
+    box.innerHTML = titles.map(t => '<div onclick="selectSuggestion(\'' + t.replace(/'/g,"\\'") + '\')">' + t + '</div>').join('');
+    box.style.display = 'block';
+  } catch (e) {
+    console.error('suggest error:', e);
+    box.style.display = 'none';
+  }
 }
 
 function selectSuggestion(t) {
@@ -136,23 +176,29 @@ function switchTab(cat, el) {
 }
 
 async function loadAllDocuments() {
-  const r = await fetch('/api/documents');
-  const docs = await r.json();
-  const el = document.getElementById('results');
-  if (docs.length === 0) {
-    el.innerHTML = '<div class="empty">暂无文档</div>';
-    return;
+  try {
+    const r = await fetch('/api/documents');
+    if (!r.ok) throw new Error('获取文档列表失败');
+    const docs = await r.json();
+    const el = document.getElementById('results');
+    if (docs.length === 0) {
+      el.innerHTML = '<div class="empty">暂无文档</div>';
+      return;
+    }
+    el.innerHTML = docs.map(d =>
+      '<div class="result-item" onclick="openDoc(\'' + d.id + '\')">' +
+        '<div class="result-title">' + esc(d.title) + '</div>' +
+        '<div class="result-meta">' +
+          (d.category ? '<span class="badge">' + esc(d.category) + '</span>' : '') +
+          (d.filename ? '<span>' + esc(d.filename) + '</span>' : '') +
+          (d.created_at ? '<span>' + esc(d.created_at.slice(0,10)) + '</span>' : '') +
+        '</div>' +
+      '</div>'
+    ).join('');
+  } catch (e) {
+    document.getElementById('results').innerHTML = '<div class="empty">加载失败，请刷新重试</div>';
+    console.error('loadAllDocuments error:', e);
   }
-  el.innerHTML = docs.map(d =>
-    '<div class="result-item" onclick="openDoc(\'' + d.id + '\')">' +
-      '<div class="result-title">' + esc(d.title) + '</div>' +
-      '<div class="result-meta">' +
-        (d.category ? '<span class="badge">' + esc(d.category) + '</span>' : '') +
-        (d.filename ? '<span>' + esc(d.filename) + '</span>' : '') +
-        (d.created_at ? '<span>' + esc(d.created_at.slice(0,10)) + '</span>' : '') +
-      '</div>' +
-    '</div>'
-  ).join('');
 }
 
 async function search() {
@@ -162,25 +208,54 @@ async function search() {
     loadAllDocuments();
     return;
   }
-  const url = '/api/search?q=' + encodeURIComponent(q) + '&top_k=20' + (currentCategory ? '&category=' + encodeURIComponent(currentCategory) : '');
-  const r = await fetch(url);
-  const data = await r.json();
-  const el = document.getElementById('results');
-  if (data.results.length === 0) {
-    el.innerHTML = '<div class="empty">未找到相关内容，换个关键词试试</div>';
-    return;
+  try {
+    const url = '/api/search?q=' + encodeURIComponent(q) + '&top_k=20' + (currentCategory ? '&category=' + encodeURIComponent(currentCategory) : '');
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('搜索请求失败');
+    const data = await r.json();
+    const el = document.getElementById('results');
+    if (data.results.length === 0) {
+      el.innerHTML = '<div class="empty">未找到相关内容，换个关键词试试</div>';
+      return;
+    }
+    el.innerHTML = data.results.map(d =>
+      '<div class="result-item" onclick="openDoc(\'' + d.id + '\')">' +
+        '<div class="result-title">' + esc(d.title) + '</div>' +
+        '<div class="result-snippet">' + highlightKeywords(esc(d.snippet), q) + '</div>' +
+        '<div class="result-meta">' +
+          (d.category ? '<span class="badge">' + esc(d.category) + '</span>' : '') +
+          '<span>相关度: ' + (d.score > 0 ? d.score.toFixed(3) : '-') + '</span>' +
+          (d.filename ? '<span>' + esc(d.filename) + '</span>' : '') +
+        '</div>' +
+      '</div>'
+    ).join('');
+  } catch (e) {
+    document.getElementById('results').innerHTML = '<div class="empty">搜索失败，请检查网络连接后重试</div>';
+    console.error('search error:', e);
   }
-  el.innerHTML = data.results.map(d =>
-    '<div class="result-item" onclick="openDoc(\'' + d.id + '\')">' +
-      '<div class="result-title">' + esc(d.title) + '</div>' +
-      '<div class="result-snippet">' + esc(d.snippet) + '</div>' +
-      '<div class="result-meta">' +
-        (d.category ? '<span class="badge">' + esc(d.category) + '</span>' : '') +
-        '<span>相关度: ' + (d.score > 0 ? d.score.toFixed(3) : '-') + '</span>' +
-        (d.filename ? '<span>' + esc(d.filename) + '</span>' : '') +
-      '</div>' +
-    '</div>'
-  ).join('');
+}
+
+function highlightKeywords(text, query) {
+  if (!text || !query) return text;
+  const tokens = query.match(/[a-zA-Z0-9\-_./]+|[一-鿿]+/g);
+  if (!tokens) return text;
+  const seen = new Set();
+  tokens.forEach(t => {
+    const lower = t.toLowerCase();
+    if (seen.has(lower)) return;
+    seen.add(lower);
+    const escaped = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (/[一-鿿]/.test(t)) {
+      [...t].forEach(ch => {
+        const re = new RegExp('(' + ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+        text = text.replace(re, '<mark class="highlight">$1</mark>');
+      });
+    } else {
+      const re = new RegExp('(' + escaped + ')', 'gi');
+      text = text.replace(re, '<mark class="highlight">$1</mark>');
+    }
+  });
+  return text;
 }
 
 function openDoc(id) {
