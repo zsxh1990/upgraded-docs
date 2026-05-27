@@ -316,48 +316,19 @@ def api_rebuild_index():
     return jsonify({"indexed": count})
 
 
-@app.route("/api/upload", methods=["POST"])
-def api_upload():
-    """上传并导入文档。"""
-    if "file" not in request.files:
-        return jsonify({"error": "未选择文件"}), 400
-    f = request.files["file"]
-    if not f.filename:
-        return jsonify({"error": "文件名为空"}), 400
-
-    ext = Path(f.filename).suffix.lower()
-    if ext not in {".md", ".txt", ".docx", ".xlsx", ".pptx"}:
-        return jsonify({"error": f"不支持的格式: {ext}"}), 400
-
-    from werkzeug.utils import secure_filename
-    safe_name = secure_filename(f.filename) or f"upload_{int(datetime.now().timestamp())}{ext}"
-
-    upload_dir = BASE / "data" / "documents"
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    save_path = upload_dir / safe_name
-    f.save(str(save_path))
-
-    # 导入
-    sys.path.insert(0, str(BASE))
-    from scripts.import_docs import import_file
-    result = import_file(save_path)
-    if result.get("skipped"):
-        return jsonify({"error": result.get("reason", "导入失败")}), 400
-
-    # 重建索引
-    rebuild_search_index()
-    return jsonify({"ok": True, "title": result.get("title", f.filename)})
-
-
 # ── Obsidian 深度绑定 ──
 
 @app.route("/api/obsidian/status")
 def api_obsidian_status():
-    """检测 Obsidian Local REST API 是否可用。"""
-    available = obsidian_bridge.is_available()
-    notes = obsidian_bridge.list_notes() if available else []
+    """检测 Obsidian 连接状态。"""
+    s = obsidian_bridge.status()
+    notes = obsidian_bridge.list_notes() if s["local_mode"] or s["rest_api"] else []
     return jsonify({
-        "available": available,
+        "available": s["local_mode"] or s["rest_api"],
+        "local_mode": s["local_mode"],
+        "vault_dir": s["vault_dir"],
+        "rest_api": s["rest_api"],
+        "write_back": s["write_back"],
         "note_count": len(notes),
     })
 

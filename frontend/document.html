@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>文档详情 - 机器人知识库</title>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f5f7; color: #172b4d; }
@@ -86,9 +87,9 @@ async function load() {
     document.getElementById('docDate').textContent = doc.created_at ? '导入: ' + doc.created_at : '';
     document.title = doc.title + ' - 机器人知识库';
 
-    // Markdown 渲染（带 XSS 防御）
+    // Markdown 渲染（DOMPurify 防 XSS）
     const content = doc.content || '(无内容)';
-    document.getElementById('docContent').innerHTML = marked.parse(content);
+    document.getElementById('docContent').innerHTML = DOMPurify.sanitize(marked.parse(content));
 
     // 加载关联配置
     const cr = await fetch('/api/configs?doc_id=' + encodeURIComponent(id));

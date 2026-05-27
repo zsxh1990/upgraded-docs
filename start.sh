@@ -39,17 +39,26 @@ fi
 
 # 5. 启动服务
 echo ""
-# 5. 尝试连接 Obsidian
+# 5. 检测 Obsidian
 echo ""
-echo "   ▸ 检测 Obsidian Local REST API..."
+echo "   ▸ 检测 Obsidian..."
 $PYTHON -c "
 import sys; sys.path.insert(0, 'backend')
-from obsidian_bridge import is_available, configure
-if is_available():
-    print('   ✅ Obsidian 已连接（可同步笔记到知识库）')
+from obsidian_bridge import status, list_notes
+s = status()
+if s['local_mode']:
+    notes = list_notes()
+    print(f'   ✅ Obsidian vault 已发现: {s[\"vault_dir\"]}')
+    print(f'      笔记数: {len(notes)}')
+    if s['rest_api']:
+        print('      REST API: 可用（支持回写标注）')
+    else:
+        print('      回写标注: 需安装 obsidian-local-rest-api 插件')
+elif s['rest_api']:
+    print('   ✅ Obsidian REST API 已连接')
 else:
-    print('   ⚠️  Obsidian 未连接（安装: obsidian-local-rest-api 插件）')
-    print('       不影响核心功能，仅 Obsidian 同步不可用')
+    print('   ⚠️  Obsidian 未找到（不影响核心搜索功能）')
+    print('       提示: 设置 OBSIDIAN_VAULT 环境变量指定 vault 路径')
 " 2>&1
 
 # 6. 启动服务
@@ -65,6 +74,7 @@ echo ""
 echo "   Obsidian 同步（需安装插件）:"
 echo "     设置 → 社区插件 → obsidian-local-rest-api → 启用"
 echo "     知识库启动后访问 /api/obsidian/status 确认连接"
+echo "     如需 API Key: export OBSIDIAN_API_KEY=你的密钥"
 echo ""
 echo "   按 Ctrl+C 停止"
 echo ""

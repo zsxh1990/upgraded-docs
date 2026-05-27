@@ -13,6 +13,7 @@ V2 新增:
 import re
 import json
 import os
+import time
 import sqlite3
 import numpy as np
 from pathlib import Path
@@ -92,6 +93,7 @@ def build_index(docs: list[dict]):
     """构建语义索引。"""
     global _DOCS, _EMBEDDINGS
     _DOCS = docs
+    invalidate_search_cache()
 
     if not docs:
         _EMBEDDINGS = np.array([])
@@ -232,6 +234,33 @@ def _build_entity_index(docs: list[dict]):
             _ENTITY_INDEX.setdefault(m.upper(), []).append((i, d))
 
 
+# ── 搜索缓存 ──────────────────────────────────────────────────────
+
+_SEARCH_CACHE = {}
+_CACHE_TTL = 300  # 5 分钟
+
+
+def _cache_get(key):
+    entry = _SEARCH_CACHE.get(key)
+    if entry and time.time() - entry[1] < _CACHE_TTL:
+        return entry[0]
+    return None
+
+
+def _cache_set(key, value):
+    _SEARCH_CACHE[key] = (value, time.time())
+    # 淘汰过期条目，限制缓存大小
+    if len(_SEARCH_CACHE) > 256:
+        now = time.time()
+        expired = [k for k, v in _SEARCH_CACHE.items() if now - v[1] >= _CACHE_TTL]
+        for k in expired:
+            del _SEARCH_CACHE[k]
+
+
+def invalidate_search_cache():
+    _SEARCH_CACHE.clear()
+
+
 # ── 搜索 ──────────────────────────────────────────────────────────
 
 def search(query: str, top_k: int = 10, category: str = "") -> list[dict]:
@@ -240,6 +269,12 @@ def search(query: str, top_k: int = 10, category: str = "") -> list[dict]:
 
     if not _DOCS:
         return []
+
+    # 缓存命中
+    cache_key = (query, top_k, category)
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
 
     candidates = _DOCS
     if category:
@@ -319,7 +354,9 @@ def search(query: str, top_k: int = 10, category: str = "") -> list[dict]:
         zip(kw_filtered, final_scores),
         key=lambda x: x[1], reverse=True
     )
-    return [{"doc": d, "score": round(float(s), 4)} for d, s in ranked[:top_k]]
+    results = [{"doc": d, "score": round(float(s), 4)} for d, s in ranked[:top_k]]
+    _cache_set(cache_key, results)
+    return results
 
 
 # ── 规则层冲突检测（新增） ─────────────────────────────────────────
