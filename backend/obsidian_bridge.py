@@ -17,6 +17,7 @@
 
 import os
 import re
+import ssl
 import time
 import json
 import hashlib
@@ -28,12 +29,17 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError
 from urllib.parse import quote as urlquote
 
+# 自签名证书上下文（Obsidian Local REST API 使用自签证书）
+_ssl_ctx = ssl.create_default_context()
+_ssl_ctx.check_hostname = False
+_ssl_ctx.verify_mode = ssl.CERT_NONE
+
 logger = logging.getLogger(__name__)
 
 # ── 配置 ──
 
-OBSIDIAN_API_BASE = os.environ.get("OBSIDIAN_API_BASE", "http://localhost:27124")
-OBSIDIAN_API_KEY = os.environ.get("OBSIDIAN_API_KEY", "")
+OBSIDIAN_API_BASE = os.environ.get("OBSIDIAN_API_BASE", "https://localhost:27124")
+OBSIDIAN_API_KEY = os.environ.get("OBSIDIAN_API_KEY", "8ff763a485fefa0403d5e07025e21a28aa427af33dec8b67c44fc26bc3503986")
 VAULT_DIR = os.environ.get("OBSIDIAN_VAULT", "")
 
 # 笔记列表缓存
@@ -122,7 +128,7 @@ def _api_get(path: str) -> dict | None:
     url = f"{OBSIDIAN_API_BASE}{path}"
     try:
         req = Request(url, headers=_auth_headers())
-        with urlopen(req, timeout=5) as resp:
+        with urlopen(req, timeout=5, context=_ssl_ctx) as resp:
             return json.loads(resp.read().decode())
     except Exception:
         return None
@@ -133,7 +139,7 @@ def _api_put(path: str, data: dict) -> bool:
     try:
         body = json.dumps(data).encode()
         req = Request(url, data=body, method="PUT", headers=_auth_headers())
-        with urlopen(req, timeout=10):
+        with urlopen(req, timeout=10, context=_ssl_ctx):
             return True
     except Exception as e:
         logger.warning(f"Obsidian API 写入失败: {e}")
@@ -359,23 +365,68 @@ def build_obsidian_index(notes: list[dict] | None = None) -> list[dict]:
 
 # ── 写入标注（需 REST API） ──
 
-def write_annotation(note_path: str, annotation: str) -> bool:
-    """向指定 Obsidian 笔记追加标注/评论。需要 REST API 插件。"""
-    if not _rest_available and not _check_rest_api():
-        logger.warning("回写标注需要 obsidian-local-rest-api 插件")
-        return False
+def _unwrap_json_content(content: str) -> str:
+    """递归解包 JSON 嵌套内容。"""
+    for _ in range(20):
+        stripped = content.strip()
+        if stripped.startswith('{') and '"content"' in stripped[:50]:
+            try:
+                parsed = json.loads(stripped)
+                new = parsed.get('content', '')
+                if new and new != stripped:
+                    content = new
+                    continue
+            except (json.JSONDecodeError, RecursionError):
+                pass
+        break
+    return content
 
-    existing = read_note(note_path)
+
+def _strip_old_annotations(content: str) -> str:
+    """移除已有的知识库标注块。"""
+    return re.sub(r'\n> \*\*知识库标注\*\*.*?(?=\n[^>]|\Z)', '', content, flags=re.DOTALL).rstrip()
+
+
+def write_annotation(note_path: str, annotation: str) -> bool:
+    """向指定 Obsidian 笔记追加标注/评论。优先本地文件写入，回退 REST API。"""
+    vault = _ensure_vault()
+
+    # 本地读取
+    existing = None
+    if vault:
+        existing = _local_read_note(vault, note_path)
+    if existing is None:
+        existing = read_note(note_path)
     if existing is None:
         return False
+
+    # 递归解包 JSON 嵌套 + 清除旧标注
+    existing = _unwrap_json_content(existing)
+    existing = _strip_old_annotations(existing)
+
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     new_content = f"{existing}\n\n> **知识库标注** ({timestamp})\n> {annotation}\n"
-    return _api_put(f"/vault/{urlquote(note_path, safe='')}",
-                    {"content": new_content})
+
+    # 优先本地文件写入
+    if vault:
+        full_path = Path(vault) / note_path
+        try:
+            full_path.write_text(new_content, encoding="utf-8")
+            return True
+        except Exception as e:
+            logger.warning(f"本地写入失败 ({full_path}): {e}")
+
+    # 回退 REST API
+    if _rest_available or _check_rest_api():
+        return _api_put(f"/vault/{urlquote(note_path, safe='')}",
+                        {"content": new_content})
+
+    logger.warning("无可用写入方式（本地文件失败，REST API 不可用）")
+    return False
 
 
 def sync_knowledge_graph_to_obsidian(graph_data: dict) -> dict:
-    """将知识图谱数据同步回 Obsidian 笔记。需要 REST API 插件。"""
+    """将知识图谱数据同步回 Obsidian 笔记。支持本地文件写入或 REST API。"""
     nodes = graph_data.get("nodes", [])
     edges = graph_data.get("edges", [])
 
@@ -385,10 +436,6 @@ def sync_knowledge_graph_to_obsidian(graph_data: dict) -> dict:
         "claims_written": 0,
         "errors": [],
     }
-
-    if not _rest_available and not _check_rest_api():
-        stats["errors"].append("回写需要安装 obsidian-local-rest-api 插件")
-        return stats
 
     notes = list_notes()
 
