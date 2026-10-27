@@ -16,7 +16,7 @@ Usage:
       "mcpServers": {
         "upgraded-docs": {
           "command": "python3",
-          "args": ["/Users/ericjia/repos/upgraded-docs/scripts/mcp_server.py"]
+          "args": ["<your-repo-path>/scripts/mcp_server.py"]
         }
       }
     }
@@ -37,6 +37,13 @@ try:
     HAS_SEARCH = True
 except ImportError:
     HAS_SEARCH = False
+
+# Import LLM generator
+try:
+    from llm_generator import generate_answer
+    HAS_LLM = True
+except ImportError:
+    HAS_LLM = False
 
 import sqlite3
 
@@ -166,6 +173,65 @@ def handle_get_stats(args: dict) -> dict:
         return {"error": str(e)}
 
 
+def handle_record_feedback(args: dict) -> dict:
+    """Record user click feedback for a search result."""
+    query = args.get("query", "")
+    doc_id = args.get("doc_id", "")
+
+    if not query or not doc_id:
+        return {"error": "Both query and doc_id are required"}
+
+    if not HAS_SEARCH:
+        return {"error": "Search engine unavailable"}
+
+    try:
+        from search_engine import record_feedback
+        record_feedback(query, doc_id)
+        return {"status": "recorded", "query": query, "doc_id": doc_id}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def handle_ask(args: dict) -> dict:
+    """Ask a question and get an LLM-generated answer based on search results."""
+    query = args.get("query", "")
+    top_k = args.get("top_k", 5)
+    model = args.get("model")
+
+    if not query:
+        return {"error": "query is required"}
+
+    if not HAS_SEARCH:
+        return {"error": "Search engine unavailable"}
+
+    if not HAS_LLM:
+        return {"error": "LLM generator unavailable (openai not installed)"}
+
+    try:
+        # Search for relevant documents
+        results = _semantic_search(query, top_k=top_k)
+
+        if not results:
+            return {
+                "answer": "根据现有知识库，未找到相关信息。",
+                "sources": [],
+                "query": query,
+            }
+
+        # Generate answer
+        llm_result = generate_answer(query, results, model=model)
+
+        return {
+            "answer": llm_result.get("answer", "生成失败"),
+            "sources": llm_result.get("sources", []),
+            "query": query,
+            "model": llm_result.get("model"),
+            "error": llm_result.get("error"),
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 # ── MCP Resources ──
 RESOURCES = [
     {
@@ -279,6 +345,63 @@ TOOLS = [
             "properties": {},
         },
     },
+    {
+        "name": "upgradeddocs_record_feedback",
+        "description": (
+            "Record user click feedback for a search result. Call this after the user selects "
+            "a search result to improve future search rankings for similar queries. "
+            "Input semantics: query (the original search query) and doc_id (the clicked document ID) "
+            "are both required. "
+            "Output schema: JSON with status, query, and doc_id. "
+            "Error cases: missing parameters or unavailable search engine. "
+            "Side effects: updates feedback database. Auth: none."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The original search query (e.g. '电池更换')"
+                },
+                "doc_id": {
+                    "type": "string",
+                    "description": "The document ID that was clicked (e.g. '37fa81f1d1ae19ae')"
+                },
+            },
+            "required": ["query", "doc_id"],
+        },
+    },
+    {
+        "name": "upgradeddocs_ask",
+        "description": (
+            "Ask a question and get an LLM-generated answer based on knowledge base search results. "
+            "Use when you need a natural language answer rather than raw search results. "
+            "Input semantics: query is required; top_k optionally limits search results (default 5); "
+            "model optionally overrides the LLM model. "
+            "Output schema: JSON with answer (natural language), sources (document titles), "
+            "query, model, and error (if any). "
+            "Error cases: missing query, unavailable search engine, or LLM generation failure. "
+            "Side effects: none. Auth: requires OPENAI_API_KEY environment variable or LLM_BASE_URL."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Required question to ask (e.g. 'SRVO-023 报警怎么处理？')"
+                },
+                "top_k": {
+                    "type": "integer",
+                    "description": "Maximum search results to use as context. Defaults to 5."
+                },
+                "model": {
+                    "type": "string",
+                    "description": "Optional LLM model override (e.g. 'gpt-4o-mini', 'qwen-plus')"
+                },
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 
@@ -321,6 +444,8 @@ def handle_request(request: dict) -> dict:
             "upgradeddocs_get_document": handle_get_document,
             "upgradeddocs_list_categories": handle_list_categories,
             "upgradeddocs_get_stats": handle_get_stats,
+            "upgradeddocs_record_feedback": handle_record_feedback,
+            "upgradeddocs_ask": handle_ask,
         }
 
         handler = handlers.get(tool_name)
